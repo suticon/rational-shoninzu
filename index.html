@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>承認図ファインダー</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f5f6f8;
+    --card-bg: #ffffff;
+    --text: #1c1e21;
+    --muted: #6b7280;
+    --border: #e2e5ea;
+    --accent: #2563eb;
+    --accent-bg: #eaf1ff;
+    --chip-bg: #eef0f3;
+    --chip-active-bg: #2563eb;
+    --chip-active-text: #ffffff;
+    --warn-bg: #fff4e5;
+    --warn-border: #f0b849;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15171c;
+      --card-bg: #1f2229;
+      --text: #e7e9ee;
+      --muted: #9aa1ac;
+      --border: #2c303a;
+      --accent: #6ea8ff;
+      --accent-bg: #1c2b47;
+      --chip-bg: #2a2e37;
+      --chip-active-bg: #6ea8ff;
+      --chip-active-text: #0f172a;
+      --warn-bg: #3a2f14;
+      --warn-border: #8a6a1f;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  header {
+    padding: 24px 20px 12px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 0.9rem; }
+  .toolbar {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #search {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text);
+  }
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .filter-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-right: 4px;
+    white-space: nowrap;
+  }
+  .chip {
+    border: 1px solid var(--border);
+    background: var(--chip-bg);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .chip.active {
+    background: var(--chip-active-bg);
+    color: var(--chip-active-text);
+    border-color: var(--chip-active-bg);
+  }
+  select {
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text);
+    font-size: 0.85rem;
+  }
+  .result-count {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .warn-banner {
+    max-width: 1200px;
+    margin: 12px auto 0;
+    padding: 12px 16px;
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    border-radius: 8px;
+    font-size: 0.85rem;
+  }
+  .warn-banner summary { cursor: pointer; font-weight: 600; }
+  .warn-banner ul { margin: 8px 0 0; padding-left: 20px; }
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 12px 20px 60px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.15s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    word-break: break-word;
+  }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+  .badge {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .badge.category { font-weight: 700; }
+  .badge.unparsed { background: var(--warn-bg); color: #a15c00; border: 1px solid var(--warn-border); }
+  .card-meta { font-size: 0.75rem; color: var(--muted); }
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 60px 20px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>承認図ファインダー</h1>
+  <div class="sub">Rational 承認図PDF 検索ツール（<span id="total-count">0</span> 件収録）</div>
+</header>
+
+<div class="toolbar">
+  <input type="text" id="search" placeholder="機種名・型式・オプションなどで検索（例: 6-11 E UltraVent LeftHinge）">
+
+  <div class="filter-row" id="category-filters">
+    <span class="filter-label">カテゴリ:</span>
+  </div>
+
+  <div class="filter-row" id="option-filters">
+    <span class="filter-label">オプション:</span>
+  </div>
+
+  <div class="filter-row">
+    <span class="filter-label">サイズ:</span>
+    <select id="size-select"><option value="">すべて</option></select>
+    <span class="filter-label">燃料:</span>
+    <select id="fuel-select">
+      <option value="">すべて</option>
+      <option value="E">E（電気）</option>
+      <option value="G">G（ガス）</option>
+    </select>
+  </div>
+</div>
+
+<div class="result-count"><span id="visible-count">0</span> 件表示中</div>
+
+<div id="unparsed-wrap"></div>
+
+<main>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty-msg" style="display:none;">該当する承認図が見つかりませんでした。</div>
+</main>
+
+<script>
+// ============================================================
+// FILES: pdf/ フォルダに収録されている実ファイル名の一覧
+// ============================================================
+const FILES = [
+  "JP-60.73.865-UltraVent_XS.pdf",
+  "JP-60.74.394-UltraVent-Plus_XS.pdf",
+  "JP-CMP XS 6-23 E_LeftHinge_master view.pdf",
+  "JP-CMP XS 6-23 E_master view.pdf",
+  "JP-Combi-Duo CMP XS 6-23 on CMP XS 6-23 on stand UG I (555mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-11 E on 10-11 E on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCC 6-11 E on 10-11 E on stand UGI (200mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-11 E on 10-11 E with UltraVent Plus on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCC 6-11 E on 10-11 E_LeftHinge on stand UGI (200mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-11 E on 6-11 E Lefthinge on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-11 E on 6-11 E on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCC 6-11 E on 6-11 E on stand UG I (150mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-11 E on 6-11 E on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-11 E on iCP 6-11 E on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-11 G on 10-11 E on StructureFeet(100-120mm).pdf",
+  "JP-Combi-Duo iCC 6-11 G on 10-11 E on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCC 6-11 G on 10-11 E on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-11 G on 10-11 E on stand UG1 (150mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-11 G on 10-11 E on stand UG1 (200mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-11 G on 6-11 E on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCC 6-11 G on 6-11 E on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-11 G on 6-11 G on Levelling kit.pdf",
+  "JP-Combi-Duo iCC 6-11 G on 6-11 G on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCC 6-11 G on 6-11 G on stand UG I (150mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-11 G on 6-11 G on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-11 G on 6-11 G on stand UG I (200mm - feet)_LeftHinge.pdf",
+  "JP-Combi-Duo iCC 6-11 G on SCC WE 61G on StructureFeet(150mm) .pdf",
+  "JP-Combi-Duo iCC 6-11 G on SCC61 E on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCC 6-21 E on 10-21 E on stand UG I (200mm - Caster).pdf",
+  "JP-Combi-Duo iCC 6-21 E on 10-21 E on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-21 E on 6-21 E on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-21 G on 6-21 E on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCC 6-21 G on 6-21 E on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCC 6-21 G on 6-21 G on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCC 6-21 G on 6-21 G on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 10-11 E on LevelingKit (35mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 10-11 E on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 10-11 E with UltraVent Plus on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 10-11 E with UltraVent on stand UG I(200mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E  (ベーカリー仕様) on stand UG II.pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E (ベーカリー仕様) on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E (ベーカリー仕様) on stand UG I (200mm - caster).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E (ベーカリー仕様) with UltraVent on StructureFeet(100mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E Autodose (ベーカリー仕様) with UltraVent on UGI (200mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E Autodose on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E Autodose on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E _LeftHinge on stand UG I (200mm - feet) with integrated fat drain left (tub).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E _LeftHinge on stand UG I (200mm - feet) with integrated fat drain right (tub).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E on  on StructureFeet(100mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E on  on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E on LevelingKit (35mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG I (200mm - Castors) (ベーカリー仕様).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG I (200mm - feet) (ベーカリー仕様).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG I (200mm - feet) with integrated fat drain right (tub).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG I (200mm - feet)_LeftHinge.pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG II.pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent Plus on StructureFeet(100mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent Plus on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent Plus on UG1(200mm - Castors) (ベーカリー仕様).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent Plus on UG1(200mm - feet) (ベーカリー仕様).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent Plus on UG1(200mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent on StructureFeet(100mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent on UG1(200mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on 6-21 E on Structure (150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on CMP101 E on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on CMP61E with 150mm feet.pdf",
+  "JP-Combi-Duo iCP 6-11 E on SCC SE_SG 61 E on StructureFeet(100mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on SCC SE_SG 61 E on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on SCC SG E 61 on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on SCC SH_SI 61 E with standard 125mm feet + UG1(210mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on SCC WE 61G on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on SCC61 E on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 E on SCC61 E on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCP 6-11 E on SCC61 E with standard 150mm feet.pdf",
+  "JP-Combi-Duo iCP 6-11 E on iCC 6-11 G on stand UG II (445mm - feet).pdf",
+  "JP-Combi-Duo iCP 6-11 G on 10-11 E on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 G on 10-11 E on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCP 6-11 G on 6-11 E on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 G on 6-11 E on stand UG I (200mm - caster).pdf",
+  "JP-Combi-Duo iCP 6-11 G on 6-11 E on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCP 6-11 G on 6-11 G _LeftHinge on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCP 6-11 G on 6-11 G on Leveling kit.pdf",
+  "JP-Combi-Duo iCP 6-11 G on 6-11 G on StructureFeet(150mm) ベーカリー仕様.pdf",
+  "JP-Combi-Duo iCP 6-11 G on 6-11 G on StructureFeet(150mm)-ﾚｲｱｳﾄ1.pdf",
+  "JP-Combi-Duo iCP 6-11 G on 6-11 G on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 G on 6-11 G on SubstructureVariant (100～120mm).pdf",
+  "JP-Combi-Duo iCP 6-11 G on 6-11 G on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCP 6-11 G on SCC WE 61G on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-11 G on SCC61 E on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-21 E on 10-21 E on Structure (87mm-100mm).pdf",
+  "JP-Combi-Duo iCP 6-21 E on 10-21 E on stand UG I (200mm - Caster).pdf",
+  "JP-Combi-Duo iCP 6-21 E on 6-21 E on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCP 6-21 E on 6-21 E on stand UG II.pdf",
+  "JP-Combi-Duo iCP 6-21 G on 10-21 E on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCP 6-21 G on 6-21 E on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCP 6-21 G on 6-21 G on StructureFeet(150mm).pdf",
+  "JP-Combi-Duo iCP 6-21 G on 6-21 G on stand UG I (200mm - feet).pdf",
+  "JP-Combi-Duo iCP XS 6-23 on 6-11 E  stand UG I (200mm - Feet).pdf",
+  "JP-Combi-Duo iCP XS 6-23 on 6-11 G  on stand UG I (200mm - Feet).pdf",
+  "JP-Combi-Duo iCP XS 6-23 on XS 6-23 Lefthinge on stand UG II (556mm - feet).pdf",
+  "JP-Combi-Duo iCP XS 6-23 on XS 6-23 on stand UG I (555mm - feet).pdf",
+  "JP-Combi-Duo iCP XS 6-23 on XS 6-23 on stand UG I (562mm - castors).pdf",
+  "JP-Combi-Duo iCP XS 6-23 on XS 6-23 on stand UG II (556mm - feet).pdf",
+  "JP-Combi-Duo iCP XS 6-23 on XS 6-23 with UltraVent Plus on stand UG I (555mm - feet).pdf",
+  "JP-Combi-Duo iCP XS 6-23 on XS 6-23 with UltraVent on stand UG I (555mm - feet).pdf",
+  "JP-Combi-Duo iCP XS 6-23 on XS 6-23 with UltraVent on stand UG II (555mm - feet).pdf",
+  "JP-Combi-Duo iCP XS 6-23 on XS 6-23_LeftHinge on stand UG I (555mm - feet).pdf",
+  "JP-ExhaustHoodiCombi-6-11_10-11.pdf",
+  "JP-iCC 10-11 E on stand Duo UG II.pdf",
+  "JP-iCC 10-11 E on stand UG I (699mm - Castor).pdf",
+  "JP-iCC 10-11 E on stand UG II (699mm - feet).pdf",
+  "JP-iCC 10-11 E on stand UG IV (699mm - feet).pdf",
+  "JP-iCC 10-11 E with UltraVent Plus on stand UG I (699mm - feet).pdf",
+  "JP-iCC 10-11 E with UltraVent.pdf",
+  "JP-iCC 10-11 E_LeftHinge_master view.pdf",
+  "JP-iCC 10-11 E_master view.pdf",
+  "JP-iCC 10-11 G on stand UG I (699mm - feet).pdf",
+  "JP-iCC 10-11 G on stand UG II (699mm - feet).pdf",
+  "JP-iCC 10-11 G on stand UG III (699mm - feet).pdf",
+  "JP-iCC 10-11 G on stand UG IV (699mm - feet).pdf",
+  "JP-iCC 10-11 G_LeftHinge on stand UG III (699mm - feet).pdf",
+  "JP-iCC 10-11 G_LeftHinge+UG2.pdf",
+  "JP-iCC 10-11 G_LeftHinge+UG4.pdf",
+  "JP-iCC 10-11 G_LeftHinge_master view.pdf",
+  "JP-iCC 10-11 G_master view.pdf",
+  "JP-iCC 10-21 E on stand UG I (699mm - Castor).pdf",
+  "JP-iCC 10-21 E_LeftHinge on stand UG I (699mm - Castor).pdf",
+  "JP-iCC 10-21 E_LeftHinge_master view.pdf",
+  "JP-iCC 10-21 E_master view.pdf",
+  "JP-iCC 10-21 G_master view.pdf",
+  "JP-iCC 20-11 E with UltraVent.pdf",
+  "JP-iCC 20-11 E_master view.pdf",
+  "JP-iCC 20-11 G_master view.pdf",
+  "JP-iCC 20-21 E_master view.pdf",
+  "JP-iCC 20-21 G_master view.pdf",
+  "JP-iCC 6-11 E on stand UG I (699mm - feet).pdf",
+  "JP-iCC 6-11 E on stand UG II (699mm - feet).pdf",
+  "JP-iCC 6-11 E with UltraVent Plus on stand UG I (699mm - feet).pdf",
+  "JP-iCC 6-11 E with UltraVent Plus.pdf",
+  "JP-iCC 6-11 E with UltraVent on stand UG II (699mm - feet).pdf",
+  "JP-iCC 6-11 E with UltraVent.pdf",
+  "JP-iCC 6-11 E_LeftHinge on stand UG III (699mm - feet).pdf",
+  "JP-iCC 6-11 E_LeftHinge_master view ベーカリー仕様.pdf",
+  "JP-iCC 6-11 E_LeftHinge_master view.pdf",
+  "JP-iCC 6-11 E_master view ベーカリー仕様.pdf",
+  "JP-iCC 6-11 E_master view.pdf",
+  "JP-iCC 6-11 G on stand UG II (699mm - feet).pdf",
+  "JP-iCC 6-11 G on stand UG IV (699mm - feet).pdf",
+  "JP-iCC 6-11 G+UG1.pdf",
+  "JP-iCC 6-11 G_LeftHinge_master view.pdf",
+  "JP-iCC 6-11 G_master view.pdf",
+  "JP-iCC 6-21 E_master view.pdf",
+  "JP-iCC 6-21 G_master view.pdf",
+  "JP-iCP 6-11 E AD UG II ベーカリー仕様.pdf",
+  "JP-iCP 6-11 E LeftHinged on stand UG II (699mm - feet).pdf",
+  "JP-iCP 6-11 E LeftHinged_AutoDose with UltraVent on stand UG II (699mm - feet).pdf",
+  "JP-iCP 6-11 E on stand UG I (699mm - feet).pdf",
+  "JP-iCP 6-11 E on stand UG II (699mm - feet) ベーカリー仕様.pdf",
+  "JP-iCP 6-11 E on stand UG II (699mm - feet).pdf",
+  "JP-iCP 6-11 E on stand UG IV (699mm - feet).pdf",
+  "JP-iCP 6-11 E with UltraVent Plus on Leveling kit.pdf",
+  "JP-iCP 6-11 E with UltraVent Plus.pdf",
+  "JP-iCP 6-11 E with UltraVent on stand UG II (699mm - feet).pdf",
+  "JP-iCP 6-11 E with UltraVent.pdf",
+  "JP-iCP 6-11 E+UG2.pdf",
+  "JP-iCP 6-11 E_AD_master view.pdf",
+  "JP-iCP 6-11 E_AutoDose with UltraVent on stand UG II (699mm - feet).pdf",
+  "JP-iCP 6-11 E_LeftHinge_master view.pdf",
+  "JP-iCP 6-11 E_master view -  on StructureFeet(150mm).pdf",
+  "JP-iCP 6-11 E_master view ベーカリー仕様.pdf",
+  "JP-iCP 6-11 E_master view.pdf",
+  "JP-iCP 6-11 G on stand UG I (699mm - feet).pdf",
+  "JP-iCP 6-11 G on stand UG II (699mm - feet) ベーカリー仕様.pdf",
+  "JP-iCP 6-11 G on stand UG II (699mm - feet).pdf",
+  "JP-iCP 6-11 G on stand UG IV (699mm - feet).pdf",
+  "JP-iCP 6-11 G+UG2.pdf",
+  "JP-iCP 6-11 G_AD_master view.pdf",
+  "JP-iCP 6-11 G_LeftHinge on stand UG IV (699mm - feet).pdf",
+  "JP-iCP 6-11 G_LeftHinge_master view.pdf",
+  "JP-iCP 6-11 G_LeftHinge_ベーカリー仕様.pdf",
+  "JP-iCP 6-11 G_master view.pdf",
+  "JP-iCP 6-11 G_ベーカリー仕様.pdf",
+  "JP-iCP 6-21 E with UltraVent Plus.pdf",
+  "JP-iCP 6-21 E_AD_master view.pdf",
+  "JP-iCP 6-21 E_LeftHinge_master view.pdf",
+  "JP-iCP 6-21 E_master view.pdf",
+  "JP-iCP 6-21 G_AD_master view.pdf"
+];
+
+// ============================================================
+// パーサー: ファイル名から機種カテゴリ・型式・オプション・架台情報を抽出する
+// 対応カテゴリ: iCP / iCC 単体, iCP / iCC 単体+架台, Combi-Duo(2段重ね),
+//              CMP 単体, CMP を含む Combi-Duo, UltraVent/排気フード等の
+//              アクセサリー単体シート。SCC(セルフッキングセンター)を
+//              Combi-Duo の下段機として含むパターンにも対応。
+// ============================================================
+const SIZE_RE = /XS\s*\d{1,2}-\d{2}|\d{1,2}-\d{2}/g;
+const FUEL_RE = /(?<![A-Za-z])([EG])(?![A-Za-z])/g;
+
+const STAND_PATTERNS = [
+  /stand\s+Duo\s+UG\s*[IV0-9]+(?:\s*\([^)]*\))?/i,
+  /stand\s+UG\s*[IV0-9]+(?:\s*\([^)]*\))?/i,
+  /UG\s*[IV0-9]+\s*\(\d+mm[^)]*\)/i,
+  /\+\s*UG\s*\d+(?:\s*\([^)]*\))?/i,
+  /Structure(?:Feet)?\s*\([^)]*\)/i,
+  /Sub ?structure ?Variant\s*\([^)]*\)/i,
+  /Lev\w*ing\s*[Kk]it(?:\s*\([^)]*\))?/i,
+  /standard\s+\d+mm\s+feet(?:\s*\+\s*UG\d*\s*\([^)]*\))?/i,
+  /with\s+\d+mm\s+feet/i,
+  /UG\s*[IV0-9]+/i,
+];
+
+function findStand(body) {
+  for (const re of STAND_PATTERNS) {
+    const m = body.match(re);
+    if (m) return m[0];
+  }
+  return null;
+}
+
+function parseFilename(file) {
+  const base = file.replace(/\.pdf$/i, "");
+  const body = base.startsWith("JP-") ? base.slice(3) : base;
+  const rec = { file, base, label: base };
+
+  // アクセサリー単体シート(部品番号ベース、または排気フード)
+  if (/^\d/.test(body) || body.startsWith("60.") || body.startsWith("ExhaustHood")) {
+    rec.category = "アクセサリー";
+    rec.sizes = [];
+    rec.fuels = [];
+    rec.stand = null;
+    rec.masterView = false;
+    rec.bakery = false;
+    rec.leftHinge = false;
+    rec.autoDose = false;
+    rec.ultraVent = /ultravent/i.test(body);
+    rec.ultraVentPlus = /ultravent[- ]?plus/i.test(body);
+    rec.unparsed = false;
+    return rec;
+  }
+
+  if (/^Combi-Duo/i.test(body)) rec.category = "Combi-Duo";
+  else if (/^CMP/i.test(body)) rec.category = "CMP";
+  else if (/^iCP/i.test(body)) rec.category = "iCP";
+  else if (/^iCC/i.test(body)) rec.category = "iCC";
+  else {
+    rec.category = "不明";
+    rec.sizes = [];
+    rec.fuels = [];
+    rec.stand = null;
+    rec.masterView = false;
+    rec.bakery = false;
+    rec.leftHinge = false;
+    rec.autoDose = false;
+    rec.ultraVent = false;
+    rec.ultraVentPlus = false;
+    rec.unparsed = true;
+    return rec;
+  }
+
+  const rawSizes = (body.match(SIZE_RE) || []).map(s => s.replace(/\s+/g, " ").trim());
+  const sizes = [...new Set(rawSizes)];
+  const fuels = [...new Set([...body.matchAll(FUEL_RE)].map(m => m[1].toUpperCase()))];
+
+  rec.sizes = sizes;
+  rec.fuels = fuels;
+  rec.stand = findStand(body);
+  rec.masterView = /master view/i.test(body);
+  rec.bakery = body.includes("ベーカリー仕様");
+  rec.leftHinge = /left ?hinge/i.test(body);
+  rec.autoDose = /auto ?dose|_AD_|(?<![A-Za-z])AD(?=[ _]|$)/i.test(body);
+  rec.ultraVentPlus = /ultravent[- ]?plus/i.test(body);
+  rec.ultraVent = /ultravent/i.test(body);
+
+  if (rec.category !== "Combi-Duo") {
+    rec.unparsed = sizes.length === 0;
+  } else {
+    const rest = body.replace(/^Combi-Duo\s*/i, "");
+    const hasAltBottom = /SCC|CMP\d/i.test(rest);
+    rec.unparsed = rawSizes.length < 2 && !hasAltBottom;
+  }
+  return rec;
+}
+
+const RECORDS = FILES.map(parseFilename);
+
+// ============================================================
+// UI
+// ============================================================
+const CATEGORY_ORDER = ["iCP", "iCC", "Combi-Duo", "CMP", "アクセサリー", "不明"];
+const OPTION_DEFS = [
+  { key: "ultraVent", label: "UltraVent" },
+  { key: "ultraVentPlus", label: "UltraVent Plus" },
+  { key: "autoDose", label: "AutoDose" },
+  { key: "leftHinge", label: "LeftHinge" },
+  { key: "bakery", label: "ベーカリー仕様" },
+  { key: "masterView", label: "master view" },
+];
+
+const state = {
+  query: "",
+  category: null,
+  options: new Set(),
+  size: "",
+  fuel: "",
+};
+
+function buildFilters() {
+  const catWrap = document.getElementById("category-filters");
+  const presentCats = CATEGORY_ORDER.filter(c => RECORDS.some(r => r.category === c));
+  for (const cat of presentCats) {
+    const count = RECORDS.filter(r => r.category === cat).length;
+    const chip = document.createElement("button");
+    chip.className = "chip";
+    chip.textContent = `${cat} (${count})`;
+    chip.dataset.value = cat;
+    chip.addEventListener("click", () => {
+      state.category = state.category === cat ? null : cat;
+      render();
+    });
+    catWrap.appendChild(chip);
+  }
+
+  const optWrap = document.getElementById("option-filters");
+  for (const opt of OPTION_DEFS) {
+    const count = RECORDS.filter(r => r[opt.key]).length;
+    if (count === 0) continue;
+    const chip = document.createElement("button");
+    chip.className = "chip";
+    chip.textContent = `${opt.label} (${count})`;
+    chip.dataset.value = opt.key;
+    chip.addEventListener("click", () => {
+      if (state.options.has(opt.key)) state.options.delete(opt.key);
+      else state.options.add(opt.key);
+      render();
+    });
+    optWrap.appendChild(chip);
+  }
+
+  const sizeSelect = document.getElementById("size-select");
+  const allSizes = [...new Set(RECORDS.flatMap(r => r.sizes))].sort();
+  for (const s of allSizes) {
+    const opt = document.createElement("option");
+    opt.value = s;
+    opt.textContent = s;
+    sizeSelect.appendChild(opt);
+  }
+  sizeSelect.addEventListener("change", () => { state.size = sizeSelect.value; render(); });
+
+  document.getElementById("fuel-select").addEventListener("change", (e) => {
+    state.fuel = e.target.value; render();
+  });
+
+  document.getElementById("search").addEventListener("input", (e) => {
+    state.query = e.target.value.trim().toLowerCase();
+    render();
+  });
+}
+
+function updateChipStyles() {
+  document.querySelectorAll("#category-filters .chip").forEach(chip => {
+    chip.classList.toggle("active", chip.dataset.value === state.category);
+  });
+  document.querySelectorAll("#option-filters .chip").forEach(chip => {
+    chip.classList.toggle("active", state.options.has(chip.dataset.value));
+  });
+}
+
+function matches(rec) {
+  if (state.category && rec.category !== state.category) return false;
+  for (const key of state.options) if (!rec[key]) return false;
+  if (state.size && !rec.sizes.includes(state.size)) return false;
+  if (state.fuel && !rec.fuels.includes(state.fuel)) return false;
+  if (state.query && !rec.base.toLowerCase().includes(state.query)) return false;
+  return true;
+}
+
+function renderUnparsed() {
+  const wrap = document.getElementById("unparsed-wrap");
+  wrap.innerHTML = "";
+  const bad = RECORDS.filter(r => r.unparsed);
+  if (bad.length === 0) return;
+  const details = document.createElement("details");
+  details.className = "warn-banner";
+  const summary = document.createElement("summary");
+  summary.textContent = `判定できなかったファイル名: ${bad.length} 件（クリックで一覧表示）`;
+  details.appendChild(summary);
+  const ul = document.createElement("ul");
+  for (const r of bad) {
+    const li = document.createElement("li");
+    li.textContent = r.file;
+    ul.appendChild(li);
+  }
+  details.appendChild(ul);
+  wrap.appendChild(details);
+}
+
+function badgeFor(rec) {
+  const badges = [];
+  badges.push(`<span class="badge category">${rec.category}</span>`);
+  for (const s of rec.sizes) badges.push(`<span class="badge">${s}</span>`);
+  for (const f of rec.fuels) badges.push(`<span class="badge">${f}</span>`);
+  if (rec.ultraVentPlus) badges.push(`<span class="badge">UltraVent Plus</span>`);
+  else if (rec.ultraVent) badges.push(`<span class="badge">UltraVent</span>`);
+  if (rec.autoDose) badges.push(`<span class="badge">AutoDose</span>`);
+  if (rec.leftHinge) badges.push(`<span class="badge">LeftHinge</span>`);
+  if (rec.bakery) badges.push(`<span class="badge">ベーカリー仕様</span>`);
+  if (rec.masterView) badges.push(`<span class="badge">master view</span>`);
+  if (rec.unparsed) badges.push(`<span class="badge unparsed">要確認</span>`);
+  return badges.join("");
+}
+
+function render() {
+  updateChipStyles();
+  const grid = document.getElementById("grid");
+  const filtered = RECORDS.filter(matches);
+  grid.innerHTML = "";
+  for (const rec of filtered) {
+    const a = document.createElement("a");
+    a.className = "card";
+    a.href = "pdf/" + encodeURIComponent(rec.file);
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.innerHTML = `
+      <div class="card-title">${rec.base}</div>
+      <div class="badges">${badgeFor(rec)}</div>
+      ${rec.stand ? `<div class="card-meta">架台: ${rec.stand}</div>` : ""}
+    `;
+    grid.appendChild(a);
+  }
+  document.getElementById("visible-count").textContent = filtered.length;
+  document.getElementById("empty-msg").style.display = filtered.length === 0 ? "block" : "none";
+}
+
+document.getElementById("total-count").textContent = FILES.length;
+buildFilters();
+renderUnparsed();
+render();
+</script>
+</body>
+</html>
