@@ -137,13 +137,33 @@
     border-radius: 10px;
     padding: 14px 16px;
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-    text-decoration: none;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 10px;
     color: var(--text);
     transition: border-color 0.15s;
   }
   .card:hover { border-color: var(--accent); }
+  .card-select {
+    flex: none;
+    display: flex;
+    align-items: center;
+    padding-top: 2px;
+  }
+  .card-select input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+  .card-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-decoration: none;
+    color: inherit;
+  }
   .card-title {
     font-size: 0.9rem;
     font-weight: 600;
@@ -166,6 +186,57 @@
     color: var(--muted);
     padding: 60px 20px;
   }
+  main { padding-bottom: 110px; }
+  .share-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+  .share-bar-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .share-count-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .share-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: auto;
+  }
+  .share-btn {
+    border: 1px solid var(--border);
+    background: var(--chip-bg);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    min-height: 40px;
+  }
+  .share-btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+  .share-btn-ghost {
+    background: transparent;
+  }
+  .share-btn:disabled { opacity: 0.6; cursor: default; }
 </style>
 </head>
 <body>
@@ -205,6 +276,19 @@
   <div class="grid" id="grid"></div>
   <div class="empty" id="empty-msg" style="display:none;">該当する承認図が見つかりませんでした。</div>
 </main>
+
+<div class="share-bar" id="share-bar" style="display:none;">
+  <div class="share-bar-inner">
+    <span class="share-count-label"><span id="share-count">0</span> 件選択中</span>
+    <div class="share-actions">
+      <button type="button" id="btn-web-share" class="share-btn share-btn-primary">📤 共有</button>
+      <button type="button" id="btn-mail-share" class="share-btn">✉️ メール</button>
+      <button type="button" id="btn-line-share" class="share-btn">💬 LINE</button>
+      <button type="button" id="btn-sms-share" class="share-btn">📱 SMS</button>
+      <button type="button" id="btn-clear-share" class="share-btn share-btn-ghost">✕ 解除</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ============================================================
@@ -519,6 +603,7 @@ const state = {
   options: new Set(),
   size: "",
   fuel: "",
+  selected: new Set(),
 };
 
 function buildFilters() {
@@ -632,8 +717,22 @@ function render() {
   const filtered = RECORDS.filter(matches);
   grid.innerHTML = "";
   for (const rec of filtered) {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const selectWrap = document.createElement("div");
+    selectWrap.className = "card-select";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.setAttribute("aria-label", `${rec.base} を選択`);
+    checkbox.checked = state.selected.has(rec.file);
+    checkbox.addEventListener("change", () => {
+      toggleSelect(rec.file, checkbox.checked);
+    });
+    selectWrap.appendChild(checkbox);
+
     const a = document.createElement("a");
-    a.className = "card";
+    a.className = "card-body";
     a.href = "pdf/" + encodeURIComponent(rec.file);
     a.target = "_blank";
     a.rel = "noopener";
@@ -642,15 +741,132 @@ function render() {
       <div class="badges">${badgeFor(rec)}</div>
       ${rec.stand ? `<div class="card-meta">架台: ${rec.stand}</div>` : ""}
     `;
-    grid.appendChild(a);
+
+    card.appendChild(selectWrap);
+    card.appendChild(a);
+    grid.appendChild(card);
   }
   document.getElementById("visible-count").textContent = filtered.length;
   document.getElementById("empty-msg").style.display = filtered.length === 0 ? "block" : "none";
 }
 
+// ============================================================
+// 共有機能: チェックボックスで選んだ承認図をメール/LINE/SMS/OSの共有シートで送信
+// ============================================================
+function getSelectedRecords() {
+  return RECORDS.filter(r => state.selected.has(r.file));
+}
+
+function toggleSelect(file, checked) {
+  if (checked) state.selected.add(file);
+  else state.selected.delete(file);
+  updateShareBar();
+}
+
+function clearSelection() {
+  state.selected.clear();
+  updateShareBar();
+  render();
+}
+
+function updateShareBar() {
+  const bar = document.getElementById("share-bar");
+  const count = state.selected.size;
+  document.getElementById("share-count").textContent = count;
+  bar.style.display = count > 0 ? "flex" : "none";
+}
+
+function absoluteUrl(file) {
+  return new URL("pdf/" + encodeURIComponent(file), window.location.href).href;
+}
+
+function buildShareText(records) {
+  const lines = records.map(r => `${r.base}\n${absoluteUrl(r.file)}`);
+  return `承認図を送付します。\n\n${lines.join("\n\n")}`;
+}
+
+function shareViaMail() {
+  const records = getSelectedRecords();
+  if (records.length === 0) return;
+  const subject = encodeURIComponent(`承認図: ${records.map(r => r.base).join(", ")}`.slice(0, 200));
+  const body = encodeURIComponent(buildShareText(records));
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+function shareViaLine() {
+  const records = getSelectedRecords();
+  if (records.length === 0) return;
+  const text = encodeURIComponent(buildShareText(records));
+  window.open(`https://line.me/R/msg/text/?${text}`, "_blank", "noopener");
+}
+
+function shareViaSms() {
+  const records = getSelectedRecords();
+  if (records.length === 0) return;
+  const text = encodeURIComponent(buildShareText(records));
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+  window.location.href = isIOS ? `sms:&body=${text}` : `sms:?body=${text}`;
+}
+
+async function getShareFiles(records) {
+  const files = [];
+  for (const rec of records) {
+    const res = await fetch("pdf/" + encodeURIComponent(rec.file));
+    if (!res.ok) throw new Error("fetch failed: " + rec.file);
+    const blob = await res.blob();
+    files.push(new File([blob], rec.file, { type: "application/pdf" }));
+  }
+  return files;
+}
+
+async function shareViaWebShare() {
+  const records = getSelectedRecords();
+  if (records.length === 0) return;
+  const btn = document.getElementById("btn-web-share");
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "準備中...";
+  try {
+    let shareData = null;
+    if (navigator.canShare) {
+      try {
+        const files = await getShareFiles(records);
+        if (navigator.canShare({ files })) {
+          shareData = { files, title: "承認図", text: buildShareText(records) };
+        }
+      } catch (err) {
+        // PDF取得に失敗した場合はリンク共有にフォールバック
+      }
+    }
+    if (!shareData) {
+      shareData = { title: "承認図", text: buildShareText(records) };
+    }
+    await navigator.share(shareData);
+  } catch (err) {
+    if (err.name !== "AbortError") {
+      alert("共有に失敗しました。メール / LINE / SMS ボタンをお試しください。");
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+function initShareBar() {
+  if (!navigator.share) {
+    document.getElementById("btn-web-share").style.display = "none";
+  }
+  document.getElementById("btn-web-share").addEventListener("click", shareViaWebShare);
+  document.getElementById("btn-mail-share").addEventListener("click", shareViaMail);
+  document.getElementById("btn-line-share").addEventListener("click", shareViaLine);
+  document.getElementById("btn-sms-share").addEventListener("click", shareViaSms);
+  document.getElementById("btn-clear-share").addEventListener("click", clearSelection);
+}
+
 document.getElementById("total-count").textContent = FILES.length;
 buildFilters();
 renderUnparsed();
+initShareBar();
 render();
 </script>
 </body>
