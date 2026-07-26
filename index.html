@@ -6,867 +6,581 @@
 <title>承認図ファインダー</title>
 <style>
   :root {
-    color-scheme: light dark;
-    --bg: #f5f6f8;
-    --card-bg: #ffffff;
-    --text: #1c1e21;
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --text: #1b1f27;
+    --navy: #1b2a4a;
     --muted: #6b7280;
-    --border: #e2e5ea;
-    --accent: #2563eb;
-    --accent-bg: #eaf1ff;
-    --chip-bg: #eef0f3;
-    --chip-active-bg: #2563eb;
+    --border: #e3e6ec;
+    --accent: #e2001a;
+    --accent-bg: #fdecee;
+    --chip-bg: #eef1f5;
+    --chip-active-bg: #e2001a;
     --chip-active-text: #ffffff;
-    --warn-bg: #fff4e5;
-    --warn-border: #f0b849;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #15171c;
-      --card-bg: #1f2229;
-      --text: #e7e9ee;
-      --muted: #9aa1ac;
-      --border: #2c303a;
-      --accent: #6ea8ff;
-      --accent-bg: #1c2b47;
-      --chip-bg: #2a2e37;
-      --chip-active-bg: #6ea8ff;
-      --chip-active-text: #0f172a;
-      --warn-bg: #3a2f14;
-      --warn-border: #8a6a1f;
-    }
+    --shadow: 0 1px 3px rgba(20,24,33,.06);
   }
   * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
     background: var(--bg);
     color: var(--text);
-    line-height: 1.5;
+    line-height: 1.55;
   }
+  button { font-family: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- ヘッダー ---------- */
   header {
-    padding: 24px 20px 12px;
-    max-width: 1200px;
-    margin: 0 auto;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 30;
   }
-  h1 { font-size: 1.4rem; margin: 0 0 4px; }
-  .sub { color: var(--muted); font-size: 0.9rem; }
-  .toolbar {
-    max-width: 1200px;
+  .header-inner {
+    max-width: 1180px;
     margin: 0 auto;
-    padding: 12px 20px;
+    padding: 12px 16px;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
     gap: 12px;
   }
-  #search {
-    width: 100%;
-    padding: 10px 14px;
-    font-size: 1rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--card-bg);
-    color: var(--text);
+  h1 { font-size: 1.05rem; margin: 0; color: var(--navy); }
+  .sub { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+  .logo { flex: none; height: 30px; width: auto; display: block; }
+  .logo-fallback {
+    flex: none;
+    display: flex; align-items: center; gap: 5px;
+    border: 1.5px solid var(--accent); border-radius: 5px;
+    padding: 4px 9px; font-weight: 800; font-size: .8rem;
+    color: var(--navy); letter-spacing: .02em;
   }
-  .filter-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
+  .logo-fallback::before {
+    content: ""; width: 7px; height: 7px; border-radius: 999px; background: var(--accent);
   }
-  .filter-label {
-    font-size: 0.8rem;
-    color: var(--muted);
-    margin-right: 4px;
-    white-space: nowrap;
+
+  /* ---------- レイアウト ---------- */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 14px 16px 120px; }
+  .cols { display: block; }
+  @media (min-width: 900px) {
+    .cols { display: grid; grid-template-columns: 330px 1fr; gap: 24px; align-items: start; }
+    .col-filters { position: sticky; top: 68px; max-height: calc(100vh - 88px); overflow-y: auto; }
+    .wrap { padding-bottom: 40px; }
   }
+
+  /* ---------- カテゴリタブ ---------- */
+  .cats { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+  .cat-btn {
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    padding: 9px 15px; border-radius: 8px; font-size: .87rem; font-weight: 600;
+    cursor: pointer; min-height: 42px;
+  }
+  .cat-btn.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+
+  /* ---------- 絞り込み ---------- */
+  .filter-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 4px solid var(--accent); border-radius: 10px;
+    padding: 14px 16px; box-shadow: var(--shadow);
+  }
+  .filter-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; margin-bottom: 12px;
+  }
+  .filter-head b { font-size: .88rem; }
+  .clear-btn {
+    border: 1px solid var(--border); background: transparent; color: var(--muted);
+    font-size: .74rem; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+  }
+  .clear-btn:disabled { opacity: .4; cursor: default; }
+  .chipgroup { margin-bottom: 13px; }
+  .chipgroup:last-child { margin-bottom: 0; }
+  .chipgroup-label { font-size: .72rem; color: var(--muted); margin-bottom: 6px; }
+  .chiprow { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip {
-    border: 1px solid var(--border);
-    background: var(--chip-bg);
-    color: var(--text);
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    user-select: none;
+    border: 1px solid var(--border); background: var(--chip-bg); color: var(--text);
+    padding: 7px 12px; border-radius: 999px; font-size: .8rem; cursor: pointer;
+    min-height: 34px;
   }
   .chip.active {
-    background: var(--chip-active-bg);
-    color: var(--chip-active-text);
-    border-color: var(--chip-active-bg);
+    background: var(--chip-active-bg); color: var(--chip-active-text);
+    border-color: var(--chip-active-bg); font-weight: 600;
   }
-  select {
-    padding: 6px 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--card-bg);
-    color: var(--text);
-    font-size: 0.85rem;
+  .hint { font-size: .7rem; color: var(--muted); margin: 8px 0 0; }
+
+  /* ---------- 検索 ---------- */
+  #search {
+    width: 100%; padding: 10px 13px; font-size: 16px; margin-bottom: 12px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface); color: var(--text);
   }
-  .result-count {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-    color: var(--muted);
-    font-size: 0.85rem;
+
+  /* ---------- 結果 ---------- */
+  .results-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 10px; margin: 18px 0 8px;
   }
-  .warn-banner {
-    max-width: 1200px;
-    margin: 12px auto 0;
-    padding: 12px 16px;
-    background: var(--warn-bg);
-    border: 1px solid var(--warn-border);
-    border-radius: 8px;
-    font-size: 0.85rem;
+  @media (min-width: 900px) { .results-head { margin-top: 0; } }
+  .results-head b { font-size: .9rem; }
+  .results-head .count { font-size: .76rem; color: var(--muted); }
+  .notice {
+    border: 1px dashed var(--border); border-radius: 10px;
+    padding: 28px 18px; text-align: center; color: var(--muted); font-size: .82rem;
   }
-  .warn-banner summary { cursor: pointer; font-weight: 600; }
-  .warn-banner ul { margin: 8px 0 0; padding-left: 20px; }
-  main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 12px 20px 60px;
+  .row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; margin-bottom: 8px; box-shadow: var(--shadow);
   }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 12px;
+  .row.checked { border-color: var(--accent); background: var(--accent-bg); }
+  .row input[type="checkbox"] { width: 20px; height: 20px; flex: none; cursor: pointer; accent-color: var(--accent); }
+  .row-body { flex: 1; min-width: 0; }
+  .row-name {
+    font-size: .83rem; font-weight: 600; word-break: break-word;
+    text-decoration: none; color: inherit; display: block;
   }
-  .card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 10px;
-    color: var(--text);
-    transition: border-color 0.15s;
+  .row-name:hover { color: var(--accent); text-decoration: underline; }
+  .row-meta { font-size: .71rem; color: var(--muted); margin-top: 2px; }
+  .row-actions { flex: none; display: flex; gap: 6px; }
+  .icon-btn {
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    width: 34px; height: 34px; border-radius: 7px; font-size: .95rem; cursor: pointer;
+    display: none;
   }
-  .card:hover { border-color: var(--accent); }
-  .card-select {
-    flex: none;
-    display: flex;
-    align-items: center;
-    padding-top: 2px;
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+  @media (min-width: 900px) { .icon-btn { display: block; } }
+  .more-note {
+    font-size: .76rem; color: var(--muted); text-align: center;
+    padding: 12px; border: 1px dashed var(--border); border-radius: 10px;
   }
-  .card-select input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-  }
-  .card-body {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    text-decoration: none;
-    color: inherit;
-  }
-  .card-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    word-break: break-word;
-  }
-  .badges { display: flex; flex-wrap: wrap; gap: 6px; }
-  .badge {
-    font-size: 0.72rem;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: var(--accent-bg);
-    color: var(--accent);
-    white-space: nowrap;
-  }
-  .badge.category { font-weight: 700; }
-  .badge.unparsed { background: var(--warn-bg); color: #a15c00; border: 1px solid var(--warn-border); }
-  .card-meta { font-size: 0.75rem; color: var(--muted); }
-  .empty {
-    text-align: center;
-    color: var(--muted);
-    padding: 60px 20px;
-  }
-  main { padding-bottom: 110px; }
-  .share-bar {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 20;
-    background: var(--card-bg);
-    border-top: 1px solid var(--border);
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+
+  /* ---------- 送信バー ---------- */
+  .sharebar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    background: var(--surface); border-top: 1px solid var(--border);
+    box-shadow: 0 -2px 14px rgba(20,24,33,.1);
     padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
   }
-  .share-bar-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
+  .sharebar-inner {
+    max-width: 1180px; margin: 0 auto;
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
   }
-  .share-count-label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  .share-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-left: auto;
-  }
+  .share-count { font-size: .82rem; font-weight: 700; white-space: nowrap; }
+  .share-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-left: auto; }
   .share-btn {
-    border: 1px solid var(--border);
-    background: var(--chip-bg);
-    color: var(--text);
-    padding: 8px 14px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    cursor: pointer;
+    border: 1px solid var(--border); background: var(--chip-bg); color: var(--text);
+    padding: 8px 14px; border-radius: 999px; font-size: .8rem; cursor: pointer;
     min-height: 40px;
   }
-  .share-btn-primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-    font-weight: 600;
+  .share-btn.primary {
+    background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
   }
-  .share-btn-ghost {
-    background: transparent;
-  }
-  .share-btn:disabled { opacity: 0.6; cursor: default; }
+  .share-btn.ghost { background: transparent; color: var(--muted); }
+  .share-btn:disabled { opacity: .6; cursor: default; }
 </style>
 </head>
 <body>
+
 <header>
-  <h1>承認図ファインダー</h1>
-  <div class="sub">Rational 承認図PDF 検索ツール（<span id="total-count">0</span> 件収録）</div>
+  <div class="header-inner">
+    <div>
+      <h1>承認図ファインダー</h1>
+      <div class="sub">Rational 承認図PDF 検索ツール（<span id="total-count">0</span> 件収録）</div>
+    </div>
+    <!-- logo.png を同じ階層に置くと自動でロゴが表示されます -->
+    <img class="logo" src="logo.png" alt="RATIONAL"
+         onerror="this.outerHTML='&lt;div class=\'logo-fallback\'&gt;RATIONAL&lt;/div&gt;'">
+  </div>
 </header>
 
-<div class="toolbar">
-  <input type="text" id="search" placeholder="機種名・型式・オプションなどで検索（例: 6-11 E UltraVent LeftHinge）">
+<div class="wrap">
+  <div class="cats" id="cats"></div>
 
-  <div class="filter-row" id="category-filters">
-    <span class="filter-label">カテゴリ:</span>
-  </div>
+  <div class="cols">
+    <div class="col-filters">
+      <input type="text" id="search" placeholder="ファイル名で検索（例: 6-11 UltraVent）">
+      <div class="filter-card">
+        <div class="filter-head">
+          <b>絞り込み</b>
+          <button type="button" class="clear-btn" id="clear-filters" disabled>条件をクリア</button>
+        </div>
+        <div id="filters"></div>
+        <p class="hint">選択中の項目をもう一度タップすると解除されます</p>
+      </div>
+    </div>
 
-  <div class="filter-row" id="option-filters">
-    <span class="filter-label">オプション:</span>
-  </div>
-
-  <div class="filter-row">
-    <span class="filter-label">サイズ:</span>
-    <select id="size-select"><option value="">すべて</option></select>
-    <span class="filter-label">燃料:</span>
-    <select id="fuel-select">
-      <option value="">すべて</option>
-      <option value="E">E（電気）</option>
-      <option value="G">G（ガス）</option>
-    </select>
+    <div class="col-results">
+      <div class="results-head">
+        <b>該当する承認図</b>
+        <span class="count" id="result-count"></span>
+      </div>
+      <div id="results"></div>
+    </div>
   </div>
 </div>
 
-<div class="result-count"><span id="visible-count">0</span> 件表示中</div>
-
-<div id="unparsed-wrap"></div>
-
-<main>
-  <div class="grid" id="grid"></div>
-  <div class="empty" id="empty-msg" style="display:none;">該当する承認図が見つかりませんでした。</div>
-</main>
-
-<div class="share-bar" id="share-bar" style="display:none;">
-  <div class="share-bar-inner">
-    <span class="share-count-label"><span id="share-count">0</span> 件選択中</span>
+<div class="sharebar" id="sharebar" style="display:none;">
+  <div class="sharebar-inner">
+    <span class="share-count"><span id="sel-count">0</span> 件選択中</span>
     <div class="share-actions">
-      <button type="button" id="btn-web-share" class="share-btn share-btn-primary">📤 共有</button>
-      <button type="button" id="btn-mail-share" class="share-btn">✉️ メール</button>
-      <button type="button" id="btn-line-share" class="share-btn">💬 LINE</button>
-      <button type="button" id="btn-sms-share" class="share-btn">📱 SMS</button>
-      <button type="button" id="btn-clear-share" class="share-btn share-btn-ghost">✕ 解除</button>
+      <button type="button" class="share-btn primary" id="btn-share">📤 共有</button>
+      <button type="button" class="share-btn" id="btn-mail">✉️ メール</button>
+      <button type="button" class="share-btn" id="btn-line">💬 LINE</button>
+      <button type="button" class="share-btn" id="btn-sms">📱 SMS</button>
+      <button type="button" class="share-btn" id="btn-download">⬇ ダウンロード</button>
+      <button type="button" class="share-btn ghost" id="btn-clear-sel">✕ 解除</button>
     </div>
   </div>
 </div>
 
 <script>
-// ============================================================
-// FILES: pdf/ フォルダに収録されている実ファイル名の一覧
-// ============================================================
-const FILES = [
-  "JP-60.73.865-UltraVent_XS.pdf",
-  "JP-60.74.394-UltraVent-Plus_XS.pdf",
-  "JP-CMP XS 6-23 E_LeftHinge_master view.pdf",
-  "JP-CMP XS 6-23 E_master view.pdf",
-  "JP-Combi-Duo CMP XS 6-23 on CMP XS 6-23 on stand UG I (555mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-11 E on 10-11 E on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCC 6-11 E on 10-11 E on stand UGI (200mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-11 E on 10-11 E with UltraVent Plus on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCC 6-11 E on 10-11 E_LeftHinge on stand UGI (200mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-11 E on 6-11 E Lefthinge on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-11 E on 6-11 E on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCC 6-11 E on 6-11 E on stand UG I (150mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-11 E on 6-11 E on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-11 E on iCP 6-11 E on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-11 G on 10-11 E on StructureFeet(100-120mm).pdf",
-  "JP-Combi-Duo iCC 6-11 G on 10-11 E on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCC 6-11 G on 10-11 E on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-11 G on 10-11 E on stand UG1 (150mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-11 G on 10-11 E on stand UG1 (200mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-11 G on 6-11 E on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCC 6-11 G on 6-11 E on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-11 G on 6-11 G on Levelling kit.pdf",
-  "JP-Combi-Duo iCC 6-11 G on 6-11 G on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCC 6-11 G on 6-11 G on stand UG I (150mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-11 G on 6-11 G on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-11 G on 6-11 G on stand UG I (200mm - feet)_LeftHinge.pdf",
-  "JP-Combi-Duo iCC 6-11 G on SCC WE 61G on StructureFeet(150mm) .pdf",
-  "JP-Combi-Duo iCC 6-11 G on SCC61 E on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCC 6-21 E on 10-21 E on stand UG I (200mm - Caster).pdf",
-  "JP-Combi-Duo iCC 6-21 E on 10-21 E on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-21 E on 6-21 E on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-21 G on 6-21 E on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCC 6-21 G on 6-21 E on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCC 6-21 G on 6-21 G on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCC 6-21 G on 6-21 G on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 10-11 E on LevelingKit (35mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 10-11 E on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 10-11 E with UltraVent Plus on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 10-11 E with UltraVent on stand UG I(200mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E  (ベーカリー仕様) on stand UG II.pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E (ベーカリー仕様) on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E (ベーカリー仕様) on stand UG I (200mm - caster).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E (ベーカリー仕様) with UltraVent on StructureFeet(100mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E Autodose (ベーカリー仕様) with UltraVent on UGI (200mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E Autodose on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E Autodose on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E _LeftHinge on stand UG I (200mm - feet) with integrated fat drain left (tub).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E _LeftHinge on stand UG I (200mm - feet) with integrated fat drain right (tub).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E on  on StructureFeet(100mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E on  on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E on LevelingKit (35mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG I (200mm - Castors) (ベーカリー仕様).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG I (200mm - feet) (ベーカリー仕様).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG I (200mm - feet) with integrated fat drain right (tub).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG I (200mm - feet)_LeftHinge.pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG II.pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent Plus on StructureFeet(100mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent Plus on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent Plus on UG1(200mm - Castors) (ベーカリー仕様).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent Plus on UG1(200mm - feet) (ベーカリー仕様).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent Plus on UG1(200mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent on StructureFeet(100mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent on UG1(200mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on 6-21 E on Structure (150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on CMP101 E on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on CMP61E with 150mm feet.pdf",
-  "JP-Combi-Duo iCP 6-11 E on SCC SE_SG 61 E on StructureFeet(100mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on SCC SE_SG 61 E on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on SCC SG E 61 on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on SCC SH_SI 61 E with standard 125mm feet + UG1(210mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on SCC WE 61G on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on SCC61 E on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 E on SCC61 E on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCP 6-11 E on SCC61 E with standard 150mm feet.pdf",
-  "JP-Combi-Duo iCP 6-11 E on iCC 6-11 G on stand UG II (445mm - feet).pdf",
-  "JP-Combi-Duo iCP 6-11 G on 10-11 E on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 G on 10-11 E on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCP 6-11 G on 6-11 E on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 G on 6-11 E on stand UG I (200mm - caster).pdf",
-  "JP-Combi-Duo iCP 6-11 G on 6-11 E on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCP 6-11 G on 6-11 G _LeftHinge on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCP 6-11 G on 6-11 G on Leveling kit.pdf",
-  "JP-Combi-Duo iCP 6-11 G on 6-11 G on StructureFeet(150mm) ベーカリー仕様.pdf",
-  "JP-Combi-Duo iCP 6-11 G on 6-11 G on StructureFeet(150mm)-ﾚｲｱｳﾄ1.pdf",
-  "JP-Combi-Duo iCP 6-11 G on 6-11 G on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 G on 6-11 G on SubstructureVariant (100～120mm).pdf",
-  "JP-Combi-Duo iCP 6-11 G on 6-11 G on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCP 6-11 G on SCC WE 61G on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-11 G on SCC61 E on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-21 E on 10-21 E on Structure (87mm-100mm).pdf",
-  "JP-Combi-Duo iCP 6-21 E on 10-21 E on stand UG I (200mm - Caster).pdf",
-  "JP-Combi-Duo iCP 6-21 E on 6-21 E on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCP 6-21 E on 6-21 E on stand UG II.pdf",
-  "JP-Combi-Duo iCP 6-21 G on 10-21 E on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCP 6-21 G on 6-21 E on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCP 6-21 G on 6-21 G on StructureFeet(150mm).pdf",
-  "JP-Combi-Duo iCP 6-21 G on 6-21 G on stand UG I (200mm - feet).pdf",
-  "JP-Combi-Duo iCP XS 6-23 on 6-11 E  stand UG I (200mm - Feet).pdf",
-  "JP-Combi-Duo iCP XS 6-23 on 6-11 G  on stand UG I (200mm - Feet).pdf",
-  "JP-Combi-Duo iCP XS 6-23 on XS 6-23 Lefthinge on stand UG II (556mm - feet).pdf",
-  "JP-Combi-Duo iCP XS 6-23 on XS 6-23 on stand UG I (555mm - feet).pdf",
-  "JP-Combi-Duo iCP XS 6-23 on XS 6-23 on stand UG I (562mm - castors).pdf",
-  "JP-Combi-Duo iCP XS 6-23 on XS 6-23 on stand UG II (556mm - feet).pdf",
-  "JP-Combi-Duo iCP XS 6-23 on XS 6-23 with UltraVent Plus on stand UG I (555mm - feet).pdf",
-  "JP-Combi-Duo iCP XS 6-23 on XS 6-23 with UltraVent on stand UG I (555mm - feet).pdf",
-  "JP-Combi-Duo iCP XS 6-23 on XS 6-23 with UltraVent on stand UG II (555mm - feet).pdf",
-  "JP-Combi-Duo iCP XS 6-23 on XS 6-23_LeftHinge on stand UG I (555mm - feet).pdf",
-  "JP-ExhaustHoodiCombi-6-11_10-11.pdf",
-  "JP-iCC 10-11 E on stand Duo UG II.pdf",
-  "JP-iCC 10-11 E on stand UG I (699mm - Castor).pdf",
-  "JP-iCC 10-11 E on stand UG II (699mm - feet).pdf",
-  "JP-iCC 10-11 E on stand UG IV (699mm - feet).pdf",
-  "JP-iCC 10-11 E with UltraVent Plus on stand UG I (699mm - feet).pdf",
-  "JP-iCC 10-11 E with UltraVent.pdf",
-  "JP-iCC 10-11 E_LeftHinge_master view.pdf",
-  "JP-iCC 10-11 E_master view.pdf",
-  "JP-iCC 10-11 G on stand UG I (699mm - feet).pdf",
-  "JP-iCC 10-11 G on stand UG II (699mm - feet).pdf",
-  "JP-iCC 10-11 G on stand UG III (699mm - feet).pdf",
-  "JP-iCC 10-11 G on stand UG IV (699mm - feet).pdf",
-  "JP-iCC 10-11 G_LeftHinge on stand UG III (699mm - feet).pdf",
-  "JP-iCC 10-11 G_LeftHinge+UG2.pdf",
-  "JP-iCC 10-11 G_LeftHinge+UG4.pdf",
-  "JP-iCC 10-11 G_LeftHinge_master view.pdf",
-  "JP-iCC 10-11 G_master view.pdf",
-  "JP-iCC 10-21 E on stand UG I (699mm - Castor).pdf",
-  "JP-iCC 10-21 E_LeftHinge on stand UG I (699mm - Castor).pdf",
-  "JP-iCC 10-21 E_LeftHinge_master view.pdf",
-  "JP-iCC 10-21 E_master view.pdf",
-  "JP-iCC 10-21 G_master view.pdf",
-  "JP-iCC 20-11 E with UltraVent.pdf",
-  "JP-iCC 20-11 E_master view.pdf",
-  "JP-iCC 20-11 G_master view.pdf",
-  "JP-iCC 20-21 E_master view.pdf",
-  "JP-iCC 20-21 G_master view.pdf",
-  "JP-iCC 6-11 E on stand UG I (699mm - feet).pdf",
-  "JP-iCC 6-11 E on stand UG II (699mm - feet).pdf",
-  "JP-iCC 6-11 E with UltraVent Plus on stand UG I (699mm - feet).pdf",
-  "JP-iCC 6-11 E with UltraVent Plus.pdf",
-  "JP-iCC 6-11 E with UltraVent on stand UG II (699mm - feet).pdf",
-  "JP-iCC 6-11 E with UltraVent.pdf",
-  "JP-iCC 6-11 E_LeftHinge on stand UG III (699mm - feet).pdf",
-  "JP-iCC 6-11 E_LeftHinge_master view ベーカリー仕様.pdf",
-  "JP-iCC 6-11 E_LeftHinge_master view.pdf",
-  "JP-iCC 6-11 E_master view ベーカリー仕様.pdf",
-  "JP-iCC 6-11 E_master view.pdf",
-  "JP-iCC 6-11 G on stand UG II (699mm - feet).pdf",
-  "JP-iCC 6-11 G on stand UG IV (699mm - feet).pdf",
-  "JP-iCC 6-11 G+UG1.pdf",
-  "JP-iCC 6-11 G_LeftHinge_master view.pdf",
-  "JP-iCC 6-11 G_master view.pdf",
-  "JP-iCC 6-21 E_master view.pdf",
-  "JP-iCC 6-21 G_master view.pdf",
-  "JP-iCP 6-11 E AD UG II ベーカリー仕様.pdf",
-  "JP-iCP 6-11 E LeftHinged on stand UG II (699mm - feet).pdf",
-  "JP-iCP 6-11 E LeftHinged_AutoDose with UltraVent on stand UG II (699mm - feet).pdf",
-  "JP-iCP 6-11 E on stand UG I (699mm - feet).pdf",
-  "JP-iCP 6-11 E on stand UG II (699mm - feet) ベーカリー仕様.pdf",
-  "JP-iCP 6-11 E on stand UG II (699mm - feet).pdf",
-  "JP-iCP 6-11 E on stand UG IV (699mm - feet).pdf",
-  "JP-iCP 6-11 E with UltraVent Plus on Leveling kit.pdf",
-  "JP-iCP 6-11 E with UltraVent Plus.pdf",
-  "JP-iCP 6-11 E with UltraVent on stand UG II (699mm - feet).pdf",
-  "JP-iCP 6-11 E with UltraVent.pdf",
-  "JP-iCP 6-11 E+UG2.pdf",
-  "JP-iCP 6-11 E_AD_master view.pdf",
-  "JP-iCP 6-11 E_AutoDose with UltraVent on stand UG II (699mm - feet).pdf",
-  "JP-iCP 6-11 E_LeftHinge_master view.pdf",
-  "JP-iCP 6-11 E_master view -  on StructureFeet(150mm).pdf",
-  "JP-iCP 6-11 E_master view ベーカリー仕様.pdf",
-  "JP-iCP 6-11 E_master view.pdf",
-  "JP-iCP 6-11 G on stand UG I (699mm - feet).pdf",
-  "JP-iCP 6-11 G on stand UG II (699mm - feet) ベーカリー仕様.pdf",
-  "JP-iCP 6-11 G on stand UG II (699mm - feet).pdf",
-  "JP-iCP 6-11 G on stand UG IV (699mm - feet).pdf",
-  "JP-iCP 6-11 G+UG2.pdf",
-  "JP-iCP 6-11 G_AD_master view.pdf",
-  "JP-iCP 6-11 G_LeftHinge on stand UG IV (699mm - feet).pdf",
-  "JP-iCP 6-11 G_LeftHinge_master view.pdf",
-  "JP-iCP 6-11 G_LeftHinge_ベーカリー仕様.pdf",
-  "JP-iCP 6-11 G_master view.pdf",
-  "JP-iCP 6-11 G_ベーカリー仕様.pdf",
-  "JP-iCP 6-21 E with UltraVent Plus.pdf",
-  "JP-iCP 6-21 E_AD_master view.pdf",
-  "JP-iCP 6-21 E_LeftHinge_master view.pdf",
-  "JP-iCP 6-21 E_master view.pdf",
-  "JP-iCP 6-21 G_AD_master view.pdf"
-];
+const DRAWINGS = [{"f":"JP-Combi-Duo iCC 6-11 E on 10-11 E on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋10-11","e":"電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Classic 6-11 電気","l":"iCombi Classic 6-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCC 6-11 E on 10-11 E on stand UGI (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋10-11","e":"電気","d":"正扉","g":"UG I","st":"UG I (200mm)","ef":["電気"]},{"f":"JP-Combi-Duo iCC 6-11 E on 10-11 E with UltraVent Plus on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋10-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"脚部付き基台","st":"脚部付き基台 (87mm)","u":"iCombi Classic 6-11 電気","l":"iCombi Classic 10-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCC 6-11 E on 10-11 E_LeftHinge on stand UGI (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋10-11","e":"電気","d":"逆扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Classic 6-11 電気","l":"iCombi Classic 10-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCC 6-11 E on 6-11 E Lefthinge on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋6-11","e":"電気","d":"逆扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Classic 6-11 電気","l":"iCombi Classic 6-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCC 6-11 E on 6-11 E on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋6-11","e":"電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Classic 6-11 電気","l":"iCombi Classic 6-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCC 6-11 E on 6-11 E on stand UG I (150mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋6-11","e":"電気","d":"正扉","g":"UG I","st":"UG I (150mm)","u":"iCombi Classic 6-11 電気","l":"iCombi Classic 6-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCC 6-11 E on 6-11 E on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋6-11","e":"電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Classic 6-11 電気","l":"iCombi Classic 6-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCC 6-11 E on iCP 6-11 E on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋6-11","e":"電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Classic 6-11 電気","l":"iCombi Pro 6-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCC 6-11 G on 10-11 E on StructureFeet(100-120mm).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋10-11","e":"ガス／電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCC 6-11 G on 10-11 E on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋10-11","e":"ガス／電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Classic 6-11 ガス","l":"iCombi Classic 10-11 電気","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCC 6-11 G on 10-11 E on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋10-11","e":"ガス／電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Classic 6-11 ガス","l":"iCombi Classic 10-11 電気","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCC 6-11 G on 10-11 E on stand UG1 (150mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋10-11","e":"ガス／電気","d":"正扉","g":"UG I","st":"UG I (150mm)","u":"iCombi Classic 6-11 ガス","l":"iCombi Classic 10-11 電気","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCC 6-11 G on 10-11 E on stand UG1 (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋10-11","e":"ガス／電気","d":"正扉","g":"UG I","st":"UG I","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCC 6-11 G on 6-11 E on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋6-11","e":"ガス／電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Classic 6-11 ガス","l":"iCombi Classic 6-11 電気","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCC 6-11 G on 6-11 E on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋6-11","e":"ガス／電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Classic 6-11 ガス","l":"iCombi Classic 6-11 電気","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCC 6-11 G on 6-11 G on Levelling kit.pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋6-11","e":"ガス","d":"正扉","g":"平準設置キット","st":"平準設置キット (35mm)","u":"iCombi Classic 6-11 ガス","l":"iCombi Classic 6-11 ガス","ef":["ガス"]},{"f":"JP-Combi-Duo iCC 6-11 G on 6-11 G on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋6-11","e":"ガス","d":"正扉","g":"脚部付き基台","st":"脚部付き基台","ef":["ガス"]},{"f":"JP-Combi-Duo iCC 6-11 G on 6-11 G on stand UG I (150mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋6-11","e":"ガス","d":"正扉","g":"UG I","st":"UG I (150mm)","u":"iCombi Classic 6-11 ガス","l":"iCombi Classic 6-11 ガス","ef":["ガス"]},{"f":"JP-Combi-Duo iCC 6-11 G on 6-11 G on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋6-11","e":"ガス","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Classic 6-11 ガス","l":"iCombi Classic 6-11 ガス","ef":["ガス"]},{"f":"JP-Combi-Duo iCC 6-11 G on 6-11 G on stand UG I (200mm - feet)_LeftHinge.pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-11＋6-11","e":"ガス","d":"逆扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Classic 6-11 ガス","l":"iCombi Classic 6-11 ガス","ef":["ガス"]},{"f":"JP-Combi-Duo iCC 6-21 E on 10-21 E on stand UG I (200mm - Caster).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-21＋10-21","e":"電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Classic 6-21 電気","l":"iCombi Classic 10-21 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCC 6-21 E on 10-21 E on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-21＋10-21","e":"電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Classic 6-21 電気","l":"iCombi Classic 10-21 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCC 6-21 E on 6-21 E on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-21＋6-21","e":"電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Classic 6-21 電気","l":"iCombi Classic 6-21 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCC 6-21 G on 6-21 E on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-21＋6-21","e":"ガス／電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Classic 6-21 電気","l":"iCombi Classic 6-21 電気","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCC 6-21 G on 6-21 E on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-21＋6-21","e":"ガス／電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Classic 6-21 ガス","l":"iCombi Classic 6-21 電気","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCC 6-21 G on 6-21 G on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-21＋6-21","e":"ガス","d":"正扉","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Classic 6-21 ガス","l":"iCombi Classic 6-21 ガス","ef":["ガス"]},{"f":"JP-Combi-Duo iCC 6-21 G on 6-21 G on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Classic","s":"6-21＋6-21","e":"ガス","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Classic 6-21 ガス","l":"iCombi Classic 6-21 ガス","ef":["ガス"]},{"f":"JP-Combi-Duo iCP 6-11 E on 10-11 E on LevelingKit (35mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋10-11","e":"電気","d":"正扉","g":"平準設置キット","st":"平準設置キット (35mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 10-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 10-11 E on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋10-11","e":"電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 10-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 10-11 E with UltraVent Plus on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋10-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 10-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 10-11 E with UltraVent on stand UG I(200mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋10-11","e":"電気","d":"正扉","v":"UltraVent","g":"UG I","st":"UG I (200mm)","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E  (ベーカリー仕様) on stand UG II.pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","g":"UG II","st":"UG II","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-11 電気","o":["ベーカリー仕様"],"ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E (ベーカリー仕様) on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-11 電気","o":["ベーカリー仕様"],"ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E (ベーカリー仕様) on stand UG I (200mm - caster).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-11 電気","o":["ベーカリー仕様"],"ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E (ベーカリー仕様) with UltraVent on StructureFeet(100mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","v":"UltraVent","g":"脚部付き基台","st":"脚部付き基台","o":["ベーカリー仕様"],"ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E Autodose (ベーカリー仕様) with UltraVent on UGI (200mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","v":"UltraVent","g":"UG I","st":"UG I","o":["ベーカリー仕様","オートドーズ仕様"],"ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E Autodose on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-11 電気","o":["オートドーズ仕様"],"ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E Autodose on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-11 電気","o":["オートドーズ仕様"],"ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E _LeftHinge on stand UG I (200mm - feet) with integrated fat drain left (tub).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"逆扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-11 電気","o":["油脂排出システム"],"ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E _LeftHinge on stand UG I (200mm - feet) with integrated fat drain right (tub).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"逆扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-11 電気","o":["油脂排出システム"],"ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E on  on StructureFeet(100mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E on  on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E on LevelingKit (35mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","g":"平準設置キット","st":"平準設置キット (35mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG I (200mm - Castors) (ベーカリー仕様).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","g":"UG I","st":"UG I (200mm)","o":["ベーカリー仕様"],"ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG I (200mm - feet) (ベーカリー仕様).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","g":"UG I","st":"UG I (200mm)","o":["ベーカリー仕様"],"ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG I (200mm - feet) with integrated fat drain right (tub).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-11 電気","o":["油脂排出システム"],"ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","g":"UG I","st":"UG I (200mm)","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG I (200mm - feet)_LeftHinge.pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"逆扉","g":"UG I","st":"UG I (200mm)","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E on stand UG II.pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","g":"UG II","st":"UG II","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent Plus on StructureFeet(100mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"脚部付き基台","st":"脚部付き基台 (100mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent Plus on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent Plus on UG1(200mm - Castors) (ベーカリー仕様).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"UG I","st":"UG I","o":["ベーカリー仕様"],"ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent Plus on UG1(200mm - feet) (ベーカリー仕様).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"UG I","st":"UG I","o":["ベーカリー仕様"],"ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent Plus on UG1(200mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"UG I","st":"UG I","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent on StructureFeet(100mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","v":"UltraVent","g":"脚部付き基台","st":"脚部付き基台 (100mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","v":"UltraVent","g":"脚部付き基台","st":"脚部付き基台","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-11 E with UltraVent on UG1(200mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"電気","d":"正扉","v":"UltraVent","g":"UG I","st":"UG I","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on 6-21 E on Structure (150mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-21","e":"電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-21 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-11 E on iCC 6-11 G on stand UG II (445mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"ガス／電気","d":"正扉","g":"UG II","st":"UG II (445mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Classic 6-11 ガス","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCP 6-11 G on 10-11 E on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋10-11","e":"ガス／電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Pro 6-11 ガス","l":"iCombi Pro 10-11 電気","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCP 6-11 G on 10-11 E on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋10-11","e":"ガス／電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro 6-11 ガス","l":"iCombi Pro 10-11 電気","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCP 6-11 G on 6-11 E on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"ガス／電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Pro 6-11 ガス","l":"iCombi Pro 6-11 電気","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCP 6-11 G on 6-11 E on stand UG I (200mm - caster).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"ガス／電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro 6-11 ガス","l":"iCombi Pro 6-11 電気","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCP 6-11 G on 6-11 E on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"ガス／電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-11 電気","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCP 6-11 G on 6-11 G _LeftHinge on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"ガス","d":"逆扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro 6-11 ガス","l":"iCombi Pro 6-11 ガス","ef":["ガス"]},{"f":"JP-Combi-Duo iCP 6-11 G on 6-11 G on Leveling kit.pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"ガス","d":"正扉","g":"平準設置キット","st":"平準設置キット (35mm)","u":"iCombi Pro 6-11 ガス","l":"iCombi Pro 6-11 ガス","ef":["ガス"]},{"f":"JP-Combi-Duo iCP 6-11 G on 6-11 G on StructureFeet(150mm) ベーカリー仕様.pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"ガス","d":"正扉","g":"脚部付き基台","st":"脚部付き基台","o":["ベーカリー仕様"],"ef":["ガス"]},{"f":"JP-Combi-Duo iCP 6-11 G on 6-11 G on StructureFeet(150mm)-ﾚｲｱｳﾄ1.pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"ガス","d":"正扉","g":"脚部付き基台","st":"脚部付き基台","ef":["ガス"]},{"f":"JP-Combi-Duo iCP 6-11 G on 6-11 G on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"ガス","d":"正扉","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Pro 6-11 ガス","l":"iCombi Pro 6-11 ガス","ef":["ガス"]},{"f":"JP-Combi-Duo iCP 6-11 G on 6-11 G on SubstructureVariant (100～120mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"ガス","d":"正扉","g":"標準脚部","st":"標準脚部 (100-120mm)","u":"iCombi Pro 6-11 ガス","l":"iCombi Pro 6-11 ガス","ef":["ガス"]},{"f":"JP-Combi-Duo iCP 6-11 G on 6-11 G on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-11＋6-11","e":"ガス","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro 6-11 電気","l":"iCombi Pro 6-11 電気","ef":["ガス"]},{"f":"JP-Combi-Duo iCP 6-21 E on 10-21 E on Structure (87mm-100mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-21＋10-21","e":"電気","d":"正扉","g":"脚部付き基台","st":"脚部付き基台","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-21 E on 10-21 E on stand UG I (200mm - Caster).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-21＋10-21","e":"電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro 6-21 電気","l":"iCombi Pro 10-21 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-21 E on 6-21 E on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-21＋6-21","e":"電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro 6-21 電気","l":"iCombi Pro 6-21 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-21 E on 6-21 E on stand UG II.pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-21＋6-21","e":"電気","d":"正扉","g":"UG II","st":"UG II","ef":["電気"]},{"f":"JP-Combi-Duo iCP 6-21 G on 10-21 E on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-21＋10-21","e":"ガス／電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro 6-21 ガス","l":"iCombi Pro 10-21 電気","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCP 6-21 G on 6-21 E on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-21＋6-21","e":"ガス／電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro 6-21 ガス","l":"iCombi Pro 6-21 電気","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCP 6-21 G on 6-21 G on StructureFeet(150mm).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-21＋6-21","e":"ガス","d":"正扉","g":"脚部付き基台","st":"脚部付き基台 (150mm)","u":"iCombi Pro 6-21 ガス","l":"iCombi Pro 6-21 ガス","ef":["ガス"]},{"f":"JP-Combi-Duo iCP 6-21 G on 6-21 G on stand UG I (200mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"6-21＋6-21","e":"ガス","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro 6-21 ガス","l":"iCombi Pro 6-21 ガス","ef":["ガス"]},{"f":"JP-Combi-Duo iCP XS 6-23 on 6-11 E  stand UG I (200mm - Feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"XS 6-23＋6-11","e":"電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro XS 6-23 電気","l":"iCombi Pro 6-11 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP XS 6-23 on 6-11 G  on stand UG I (200mm - Feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"XS 6-23＋6-11","e":"ガス／電気","d":"正扉","g":"UG I","st":"UG I (200mm)","u":"iCombi Pro XS 6-23 電気","l":"iCombi Pro 6-11 ガス","ef":["ガス","電気"]},{"f":"JP-Combi-Duo iCP XS 6-23 on XS 6-23 Lefthinge on stand UG II (556mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"XS 6-23＋XS 6-23","e":"電気","d":"逆扉","g":"UG II","st":"UG II (556mm)","u":"iCombi Pro XS 6-23 電気","l":"iCombi Pro XS 6-23 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP XS 6-23 on XS 6-23 on stand UG I (555mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"XS 6-23＋XS 6-23","e":"電気","d":"正扉","g":"UG I","st":"UG I (555mm)","u":"iCombi Pro XS 6-23 電気","l":"iCombi Pro XS 6-23 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP XS 6-23 on XS 6-23 on stand UG I (562mm - castors).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"XS 6-23＋XS 6-23","e":"電気","d":"正扉","g":"UG I","st":"UG I (562mm)","u":"iCombi Pro XS 6-23 電気","l":"iCombi Pro XS 6-23 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP XS 6-23 on XS 6-23 on stand UG II (556mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"XS 6-23＋XS 6-23","e":"電気","d":"正扉","g":"UG II","st":"UG II (556mm)","u":"iCombi Pro XS 6-23 電気","l":"iCombi Pro XS 6-23 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP XS 6-23 on XS 6-23 with UltraVent Plus on stand UG I (555mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"XS 6-23＋XS 6-23","e":"電気","d":"正扉","v":"UltraVent Plus","g":"UG I","st":"UG I (555mm)","u":"iCombi Pro XS 6-23 電気","l":"iCombi Pro XS 6-23 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP XS 6-23 on XS 6-23 with UltraVent on stand UG I (555mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"XS 6-23＋XS 6-23","e":"電気","d":"正扉","v":"UltraVent","g":"UG I","st":"UG I (555mm)","u":"iCombi Pro XS 6-23 電気","l":"iCombi Pro XS 6-23 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP XS 6-23 on XS 6-23 with UltraVent on stand UG II (555mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"XS 6-23＋XS 6-23","e":"電気","d":"正扉","v":"UltraVent","g":"UG II","st":"UG II (555mm)","u":"iCombi Pro XS 6-23 電気","l":"iCombi Pro XS 6-23 電気","ef":["電気"]},{"f":"JP-Combi-Duo iCP XS 6-23 on XS 6-23_LeftHinge on stand UG I (555mm - feet).pdf","c":"Combi-Duo","m":"iCombi Pro","s":"XS 6-23＋XS 6-23","e":"電気","d":"逆扉","g":"UG I","st":"UG I (555mm)","u":"iCombi Pro XS 6-23 電気","l":"iCombi Pro XS 6-23 電気","ef":["電気"]},{"f":"JP-Stand iVario 2-XS (595mm - feet).pdf","c":"iVario","m":"iVario","s":"2-XS","st":"架台 (595mm)"},{"f":"JP-Stand iVario Pro 2-S (595mm - feet).pdf","c":"iVario","m":"iVario","s":"Pro 2-S","st":"架台 (595mm)"},{"f":"JP-iVario 2-XS_90mm feet+UG-Standard (595mm - feet).pdf","c":"iVario","m":"iVario","s":"2-XS","st":"架台 (595mm)","ft":"90mm"},{"f":"JP-iVario 2-XS_90mm feet.pdf","c":"iVario","m":"iVario","s":"2-XS","ft":"90mm"},{"f":"JP-iVario Pro 2-S_90mm feet+UG-Standard (595mm - feet).pdf","c":"iVario","m":"iVario","s":"Pro 2-S","st":"架台 (595mm)","ft":"90mm"},{"f":"JP-iVario Pro 2-S_90mm feet.pdf","c":"iVario","m":"iVario","s":"Pro 2-S","ft":"90mm"},{"f":"JP-iVario Pro L_Substructure (feet).pdf","c":"iVario","m":"iVario","s":"Pro L"},{"f":"JP-iVario Pro XL_Substructure (feet).pdf","c":"iVario","m":"iVario","s":"Pro XL"},{"f":"JP-60.73.865-UltraVent_XS.pdf","c":"アクセサリー","s":"XS 6-23","v":"UltraVent","n":"UltraVent（単体） 6-23"},{"f":"JP-60.74.394-UltraVent-Plus_XS.pdf","c":"アクセサリー","s":"XS 6-23","v":"UltraVent Plus","n":"UltraVent Plus（単体） 6-23"},{"f":"JP-ExhaustHoodiCombi-6-11_10-11.pdf","c":"アクセサリー","s":"6-1/1, 10-1/1","v":"換気フード","n":"換気フード（単体） 6-1/1, 10-1/1"},{"f":"JP-UltraVent-Plus_Combi-6-11_10-11.pdf","c":"アクセサリー","s":"6-1/1, 10-1/1","v":"UltraVent Plus","n":"UltraVent Plus（単体） 6-1/1, 10-1/1"},{"f":"JP-UltraVent_Combi-20-11.pdf","c":"アクセサリー","s":"20-11","v":"UltraVent","n":"UltraVent（単体） 20-1/1"},{"f":"JP-UltraVent_Combi-6-11_10-11.pdf","c":"アクセサリー","s":"6-1/1, 10-1/1","v":"UltraVent","n":"UltraVent（単体） 6-1/1, 10-1/1"},{"f":"JP-iCC 10-11 E on stand Duo UG II.pdf","c":"単品","m":"iCombi Classic","s":"10-11","e":"電気","d":"正扉","g":"DUO UG II","st":"DUO UG II"},{"f":"JP-iCC 10-11 E on stand UG I (699mm - Castor).pdf","c":"単品","m":"iCombi Classic","s":"10-11","e":"電気","d":"正扉","g":"UG I","st":"UG I (699mm)"},{"f":"JP-iCC 10-11 E on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Classic","s":"10-11","e":"電気","d":"正扉","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCC 10-11 E on stand UG IV (699mm - feet).pdf","c":"単品","m":"iCombi Classic","s":"10-11","e":"電気","d":"正扉","g":"UG IV","st":"UG IV (699mm)"},{"f":"JP-iCC 10-11 E with UltraVent Plus on stand UG I (699mm - feet).pdf","c":"単品","m":"iCombi Classic","s":"10-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"UG I","st":"UG I (699mm)"},{"f":"JP-iCC 10-11 E with UltraVent.pdf","c":"単品","m":"iCombi Classic","s":"10-11","e":"電気","d":"正扉","v":"UltraVent","g":"なし（本体のみ）"},{"f":"JP-iCC 10-11 E_LeftHinge_master view.pdf","c":"単品","m":"iCombi Classic","s":"10-11","e":"電気","d":"逆扉","g":"なし（本体のみ）"},{"f":"JP-iCC 10-11 E_master view.pdf","c":"単品","m":"iCombi Classic","s":"10-11","e":"電気","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCC 10-11 G on stand UG I (699mm - feet).pdf","c":"単品","m":"iCombi Classic","s":"10-11","e":"ガス","d":"正扉","g":"UG I","st":"UG I (699mm)"},{"f":"JP-iCC 10-11 G on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Classic","s":"10-11","e":"ガス","d":"正扉","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCC 10-11 G on stand UG III (699mm - feet).pdf","c":"単品","m":"iCombi Classic","s":"10-11","e":"ガス","d":"正扉","g":"UG III","st":"UG III (699mm)"},{"f":"JP-iCC 10-11 G on stand UG IV (699mm - feet).pdf","c":"単品","m":"iCombi Classic","s":"10-11","e":"ガス","d":"正扉","g":"UG IV","st":"UG IV (699mm)"},{"f":"JP-iCC 10-11 G_LeftHinge on stand UG III (699mm - feet).pdf","c":"単品","m":"iCombi Classic","s":"10-11","e":"ガス","d":"逆扉","g":"UG III","st":"UG III (699mm)"},{"f":"JP-iCC 10-11 G_LeftHinge_master view.pdf","c":"単品","m":"iCombi Classic","s":"10-11","e":"ガス","d":"逆扉","g":"なし（本体のみ）"},{"f":"JP-iCC 10-11 G_master view.pdf","c":"単品","m":"iCombi Classic","s":"10-11","e":"ガス","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCC 10-21 E on stand UG I (699mm - Castor).pdf","c":"単品","m":"iCombi Classic","s":"10-21","e":"電気","d":"正扉","g":"UG I","st":"UG I (699mm)"},{"f":"JP-iCC 10-21 E_LeftHinge on stand UG I (699mm - Castor).pdf","c":"単品","m":"iCombi Classic","s":"10-21","e":"電気","d":"逆扉","g":"UG I","st":"UG I (699mm)"},{"f":"JP-iCC 10-21 E_LeftHinge_master view.pdf","c":"単品","m":"iCombi Classic","s":"10-21","e":"電気","d":"逆扉","g":"なし（本体のみ）"},{"f":"JP-iCC 10-21 E_master view.pdf","c":"単品","m":"iCombi Classic","s":"10-21","e":"電気","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCC 10-21 G_master view.pdf","c":"単品","m":"iCombi Classic","s":"10-21","e":"ガス","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCC 20-11 E with UltraVent.pdf","c":"単品","m":"iCombi Classic","s":"20-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"なし（本体のみ）"},{"f":"JP-iCC 20-11 E_master view.pdf","c":"単品","m":"iCombi Classic","s":"20-11","e":"電気","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCC 20-11 G_master view.pdf","c":"単品","m":"iCombi Classic","s":"20-11","e":"ガス","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCC 20-21 E_master view.pdf","c":"単品","m":"iCombi Classic","s":"20-21","e":"電気","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCC 20-21 G_master view.pdf","c":"単品","m":"iCombi Classic","s":"20-21","e":"ガス","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCC 6-11 E on stand UG I (699mm - feet).pdf","c":"単品","m":"iCombi Classic","s":"6-11","e":"電気","d":"正扉","g":"UG I","st":"UG I (699mm)"},{"f":"JP-iCC 6-11 E on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Classic","s":"6-11","e":"電気","d":"正扉","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCC 6-11 E with UltraVent Plus on stand UG I (699mm - feet).pdf","c":"単品","m":"iCombi Classic","s":"6-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"UG I","st":"UG I (699mm)"},{"f":"JP-iCC 6-11 E with UltraVent Plus.pdf","c":"単品","m":"iCombi Classic","s":"6-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"なし（本体のみ）"},{"f":"JP-iCC 6-11 E with UltraVent on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Classic","s":"6-11","e":"電気","d":"正扉","v":"UltraVent","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCC 6-11 E with UltraVent.pdf","c":"単品","m":"iCombi Classic","s":"6-11","e":"電気","d":"正扉","v":"UltraVent","g":"なし（本体のみ）"},{"f":"JP-iCC 6-11 E_LeftHinge on stand UG III (699mm - feet).pdf","c":"単品","m":"iCombi Classic","s":"6-11","e":"電気","d":"逆扉","g":"UG III","st":"UG III (699mm)"},{"f":"JP-iCC 6-11 E_LeftHinge_master view ベーカリー仕様.pdf","c":"単品","m":"iCombi Classic","s":"6-11","e":"電気","d":"逆扉","g":"なし（本体のみ）","o":["ベーカリー仕様"]},{"f":"JP-iCC 6-11 E_LeftHinge_master view.pdf","c":"単品","m":"iCombi Classic","s":"6-11","e":"電気","d":"逆扉","g":"なし（本体のみ）"},{"f":"JP-iCC 6-11 E_master view ベーカリー仕様.pdf","c":"単品","m":"iCombi Classic","s":"6-11","e":"電気","d":"正扉","g":"なし（本体のみ）","o":["ベーカリー仕様"]},{"f":"JP-iCC 6-11 E_master view.pdf","c":"単品","m":"iCombi Classic","s":"6-11","e":"電気","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCC 6-11 G on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Classic","s":"6-11","e":"ガス","d":"正扉","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCC 6-11 G on stand UG IV (699mm - feet).pdf","c":"単品","m":"iCombi Classic","s":"6-11","e":"ガス","d":"正扉","g":"UG IV","st":"UG IV (699mm)"},{"f":"JP-iCC 6-11 G_LeftHinge_master view.pdf","c":"単品","m":"iCombi Classic","s":"6-11","e":"ガス","d":"逆扉","g":"なし（本体のみ）"},{"f":"JP-iCC 6-11 G_master view.pdf","c":"単品","m":"iCombi Classic","s":"6-11","e":"ガス","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCC 6-21 E_master view.pdf","c":"単品","m":"iCombi Classic","s":"6-21","e":"電気","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCC 6-21 G_master view.pdf","c":"単品","m":"iCombi Classic","s":"6-21","e":"ガス","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCP 10-11 E on StructureFeet(150mm).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","g":"脚部","st":"脚部"},{"f":"JP-iCP 10-11 E on stand UG I (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","g":"UG I","st":"UG I (699mm)"},{"f":"JP-iCP 10-11 E on stand UG II (699mm - feet) ベーカリー仕様.pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","g":"UG II","st":"UG II (699mm)","o":["ベーカリー仕様"]},{"f":"JP-iCP 10-11 E on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCP 10-11 E on stand UG IV (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","g":"UG IV","st":"UG IV (699mm)"},{"f":"JP-iCP 10-11 E with UltraVent Plus on stand UG I (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"UG I","st":"UG I (699mm)"},{"f":"JP-iCP 10-11 E with UltraVent Plus on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCP 10-11 E with UltraVent Plus on stand UG IV (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"UG IV","st":"UG IV (699mm)"},{"f":"JP-iCP 10-11 E with UltraVent Plus.pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"なし（本体のみ）"},{"f":"JP-iCP 10-11 E with UltraVent on stand UG I (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","v":"UltraVent","g":"UG I","st":"UG I (699mm)"},{"f":"JP-iCP 10-11 E with UltraVent on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","v":"UltraVent","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCP 10-11 E with UltraVent.pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","v":"UltraVent","g":"なし（本体のみ）"},{"f":"JP-iCP 10-11 E_+UG2(445mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","g":"UG II","st":"UG II"},{"f":"JP-iCP 10-11 E_AD_LeftHinge.pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"逆扉","g":"なし（本体のみ）","o":["オートドーズ仕様"]},{"f":"JP-iCP 10-11 E_AD_master view.pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","g":"なし（本体のみ）","o":["オートドーズ仕様"]},{"f":"JP-iCP 10-11 E_AutoDose with UltraVent on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","v":"UltraVent","g":"UG II","st":"UG II (699mm)","o":["オートドーズ仕様"]},{"f":"JP-iCP 10-11 E_LeftHinge with UltraVent Plus on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"逆扉","v":"UltraVent Plus","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCP 10-11 E_LeftHinge_AutoDose with UltraVent on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"逆扉","v":"UltraVent","g":"UG II","st":"UG II (699mm)","o":["オートドーズ仕様"]},{"f":"JP-iCP 10-11 E_LeftHinge_master view.pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"逆扉","g":"なし（本体のみ）"},{"f":"JP-iCP 10-11 E_master view.pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"電気","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCP 10-11 G on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"ガス","d":"正扉","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCP 10-11 G on stand UG II iCombi Baking (699mm - feet) - ベーカリー仕様.pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"ガス","d":"正扉","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCP 10-11 G on stand UG III (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"ガス","d":"正扉","g":"UG III","st":"UG III (699mm)"},{"f":"JP-iCP 10-11 G on stand UG IV (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"ガス","d":"正扉","g":"UG IV","st":"UG IV (699mm)"},{"f":"JP-iCP 10-11 G_+UG2(445mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"ガス","d":"正扉","g":"UG II","st":"UG II"},{"f":"JP-iCP 10-11 G_AD_master view.pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"ガス","d":"正扉","g":"なし（本体のみ）","o":["オートドーズ仕様"]},{"f":"JP-iCP 10-11 G_LeftHinge_master view.pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"ガス","d":"逆扉","g":"なし（本体のみ）"},{"f":"JP-iCP 10-11 G_master view - ベーカリー仕様.pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"ガス","d":"正扉","g":"なし（本体のみ）","o":["ベーカリー仕様"]},{"f":"JP-iCP 10-11 G_master view.pdf","c":"単品","m":"iCombi Pro","s":"10-11","e":"ガス","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCP 10-21 E on stand UG II (699mm - Castor).pdf","c":"単品","m":"iCombi Pro","s":"10-21","e":"電気","d":"正扉","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCP 10-21 E on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-21","e":"電気","d":"正扉","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCP 10-21 E on stand UG II.pdf","c":"単品","m":"iCombi Pro","s":"10-21","e":"電気","d":"正扉","g":"UG II","st":"UG II"},{"f":"JP-iCP 10-21 E with UltraVent on stand UG III (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"10-21","e":"電気","d":"正扉","v":"UltraVent","g":"UG III","st":"UG III (699mm)"},{"f":"JP-iCP 10-21 E_AD_master view.pdf","c":"単品","m":"iCombi Pro","s":"10-21","e":"電気","d":"正扉","g":"なし（本体のみ）","o":["オートドーズ仕様"]},{"f":"JP-iCP 10-21 E_LeftHinge_master view.pdf","c":"単品","m":"iCombi Pro","s":"10-21","e":"電気","d":"逆扉","g":"なし（本体のみ）"},{"f":"JP-iCP 10-21 E_master view.pdf","c":"単品","m":"iCombi Pro","s":"10-21","e":"電気","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCP 10-21 G_AD_master view.pdf","c":"単品","m":"iCombi Pro","s":"10-21","e":"ガス","d":"正扉","g":"なし（本体のみ）","o":["オートドーズ仕様"]},{"f":"JP-iCP 10-21 G_LeftHinge_master view.pdf","c":"単品","m":"iCombi Pro","s":"10-21","e":"ガス","d":"逆扉","g":"なし（本体のみ）"},{"f":"JP-iCP 10-21 G_LeftHinged_master view.pdf","c":"単品","m":"iCombi Pro","s":"10-21","e":"ガス","d":"逆扉","g":"なし（本体のみ）"},{"f":"JP-iCP 10-21 G_master view.pdf","c":"単品","m":"iCombi Pro","s":"10-21","e":"ガス","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCP 20-11 E with UltraVent.pdf","c":"単品","m":"iCombi Pro","s":"20-11","e":"電気","d":"正扉","v":"UltraVent","g":"なし（本体のみ）"},{"f":"JP-iCP 20-11 E_master view.pdf","c":"単品","m":"iCombi Pro","s":"20-11","e":"電気","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCP 20-11 G_master view.pdf","c":"単品","m":"iCombi Pro","s":"20-11","e":"ガス","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCP 20-21 E_master view.pdf","c":"単品","m":"iCombi Pro","s":"20-21","e":"電気","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCP 20-21 G_master view.pdf","c":"単品","m":"iCombi Pro","s":"20-21","e":"ガス","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCP 6-11 E AD UG II ベーカリー仕様.pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"正扉","g":"UG II","st":"UG II","o":["ベーカリー仕様","オートドーズ仕様"]},{"f":"JP-iCP 6-11 E LeftHinged on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"逆扉","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCP 6-11 E LeftHinged_AutoDose with UltraVent on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"逆扉","v":"UltraVent","g":"UG II","st":"UG II (699mm)","o":["オートドーズ仕様"]},{"f":"JP-iCP 6-11 E on stand UG I (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"正扉","g":"UG I","st":"UG I (699mm)"},{"f":"JP-iCP 6-11 E on stand UG II (699mm - feet) ベーカリー仕様.pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"正扉","g":"UG II","st":"UG II (699mm)","o":["ベーカリー仕様"]},{"f":"JP-iCP 6-11 E on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"正扉","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCP 6-11 E on stand UG IV (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"正扉","g":"UG IV","st":"UG IV (699mm)"},{"f":"JP-iCP 6-11 E with UltraVent Plus on Leveling kit.pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"平準設置キット","st":"平準設置キット"},{"f":"JP-iCP 6-11 E with UltraVent Plus.pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"正扉","v":"UltraVent Plus","g":"なし（本体のみ）"},{"f":"JP-iCP 6-11 E with UltraVent on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"正扉","v":"UltraVent","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCP 6-11 E with UltraVent.pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"正扉","v":"UltraVent","g":"なし（本体のみ）"},{"f":"JP-iCP 6-11 E_AD_master view.pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"正扉","g":"なし（本体のみ）","o":["オートドーズ仕様"]},{"f":"JP-iCP 6-11 E_AutoDose with UltraVent on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"正扉","v":"UltraVent","g":"UG II","st":"UG II (699mm)","o":["オートドーズ仕様"]},{"f":"JP-iCP 6-11 E_LeftHinge_master view.pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"逆扉","g":"なし（本体のみ）"},{"f":"JP-iCP 6-11 E_master view ベーカリー仕様.pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"正扉","g":"なし（本体のみ）","o":["ベーカリー仕様"]},{"f":"JP-iCP 6-11 E_master view.pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"電気","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCP 6-11 G on stand UG I (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"ガス","d":"正扉","g":"UG I","st":"UG I (699mm)"},{"f":"JP-iCP 6-11 G on stand UG II (699mm - feet) ベーカリー仕様.pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"ガス","d":"正扉","g":"UG II","st":"UG II (699mm)","o":["ベーカリー仕様"]},{"f":"JP-iCP 6-11 G on stand UG II (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"ガス","d":"正扉","g":"UG II","st":"UG II (699mm)"},{"f":"JP-iCP 6-11 G on stand UG IV (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"ガス","d":"正扉","g":"UG IV","st":"UG IV (699mm)"},{"f":"JP-iCP 6-11 G_AD_master view.pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"ガス","d":"正扉","g":"なし（本体のみ）","o":["オートドーズ仕様"]},{"f":"JP-iCP 6-11 G_LeftHinge on stand UG IV (699mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"ガス","d":"逆扉","g":"UG IV","st":"UG IV (699mm)"},{"f":"JP-iCP 6-11 G_LeftHinge_master view.pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"ガス","d":"逆扉","g":"なし（本体のみ）"},{"f":"JP-iCP 6-11 G_LeftHinge_ベーカリー仕様.pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"ガス","d":"逆扉","g":"なし（本体のみ）","o":["ベーカリー仕様"]},{"f":"JP-iCP 6-11 G_master view.pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"ガス","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCP 6-11 G_ベーカリー仕様.pdf","c":"単品","m":"iCombi Pro","s":"6-11","e":"ガス","d":"正扉","g":"なし（本体のみ）","o":["ベーカリー仕様"]},{"f":"JP-iCP 6-21 E with UltraVent Plus.pdf","c":"単品","m":"iCombi Pro","s":"6-21","e":"電気","d":"正扉","v":"UltraVent Plus","g":"なし（本体のみ）"},{"f":"JP-iCP 6-21 E_AD_master view.pdf","c":"単品","m":"iCombi Pro","s":"6-21","e":"電気","d":"正扉","g":"なし（本体のみ）","o":["オートドーズ仕様"]},{"f":"JP-iCP 6-21 E_LeftHinge_master view.pdf","c":"単品","m":"iCombi Pro","s":"6-21","e":"電気","d":"逆扉","g":"なし（本体のみ）"},{"f":"JP-iCP 6-21 E_master view.pdf","c":"単品","m":"iCombi Pro","s":"6-21","e":"電気","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCP 6-21 G_AD_master view.pdf","c":"単品","m":"iCombi Pro","s":"6-21","e":"ガス","d":"正扉","g":"なし（本体のみ）","o":["オートドーズ仕様"]},{"f":"JP-iCP 6-21 G_master view.pdf","c":"単品","m":"iCombi Pro","s":"6-21","e":"ガス","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-iCP XS 6-23 E on stand UG II (932mm - feet).pdf","c":"単品","m":"iCombi Pro","s":"XS 6-23","e":"電気","d":"正扉","g":"UG II","st":"UG II (932mm)"},{"f":"JP-iCP XS 6-23 E with UltraVent Plus on stand UG II (933mm).pdf","c":"単品","m":"iCombi Pro","s":"XS 6-23","e":"電気","d":"正扉","v":"UltraVent Plus","g":"UG II","st":"UG II (933mm)"},{"f":"JP-iCP XS 6-23 E with UltraVent Plus.pdf","c":"単品","m":"iCombi Pro","s":"XS 6-23","e":"電気","d":"正扉","v":"UltraVent","g":"なし（本体のみ）"},{"f":"JP-iCP XS 6-23 E with UltraVent on stand UG II (933mm).pdf","c":"単品","m":"iCombi Pro","s":"XS 6-23","e":"電気","d":"正扉","v":"UltraVent","g":"UG II","st":"UG II (933mm)"},{"f":"JP-iCP XS 6-23 E with UltraVent.pdf","c":"単品","m":"iCombi Pro","s":"XS 6-23","e":"電気","d":"正扉","v":"UltraVent","g":"なし（本体のみ）"},{"f":"JP-iCP XS 6-23 E_LeftHinge with UltraVent Plus.pdf","c":"単品","m":"iCombi Pro","s":"XS 6-23","e":"電気","d":"逆扉","v":"UltraVent Plus","g":"なし（本体のみ）"},{"f":"JP-iCP XS 6-23 E_LeftHinge with UltraVent.pdf","c":"単品","m":"iCombi Pro","s":"XS 6-23","e":"電気","d":"逆扉","v":"UltraVent","g":"なし（本体のみ）"},{"f":"JP-iCP XS 6-23 E_LeftHinge_master view.pdf","c":"単品","m":"iCombi Pro","s":"XS 6-23","e":"電気","d":"逆扉","g":"なし（本体のみ）"},{"f":"JP-iCP XS 6-23 E_master view.pdf","c":"単品","m":"iCombi Pro","s":"XS 6-23","e":"電気","d":"正扉","g":"なし（本体のみ）"},{"f":"JP-Stand UG I iCP XS 6-23 (555mm - feet).pdf","c":"架台","n":"架台","fm":"XS 6-23"},{"f":"JP-Stand UG I iCP-iCC 6-11 and 10-11 (150mm - feet).pdf","c":"架台","n":"架台 Combi-Duo用","sT":"UG I","fm":"6-11, 10-11","h":"150","ft":"標準"},{"f":"JP-Stand UG I iCP-iCC 6-11 and 10-11 (200mm - feet).pdf","c":"架台","n":"架台 Combi-Duo用","sT":"UG I","fm":"6-11, 10-11","h":"200","ft":"標準"},{"f":"JP-Stand UG I iCP-iCC 6-11 and 10-11 (699mm - feet).pdf","c":"架台","n":"架台","sT":"UG I","fm":"6-11, 10-11","h":"699","ft":"標準"},{"f":"JP-Stand UG I iCP-iCC 6-21 and 10-21 (200mm - feet).pdf","c":"架台","n":"架台 Combi-Duo用","sT":"UG I","fm":"6-21, 10-21","h":"200","ft":"標準"},{"f":"JP-Stand UG I iCP-iCC 6-21 and 10-21 (699mm - feet).pdf","c":"架台","n":"架台","sT":"UG I","fm":"6-21, 10-21","h":"699","ft":"標準"},{"f":"JP-Stand UG I iCP-iCC XS  (931mm - feet).pdf","c":"架台","n":"架台","sT":"UG I","fm":"XS 6-23","h":"931","ft":"標準"},{"f":"JP-Stand UG II Combi-Duo iCP-iCC 6-21 and 10-21 (445mm - feet).pdf","c":"架台","n":"架台","sT":"UG II","fm":"6-21, 10-21","h":"445","ft":"標準"},{"f":"JP-Stand UG II CombiDuo iCP-iCC XS  (557mm - feet).pdf","c":"架台","n":"架台","sT":"UG II","fm":"XS 6-23","h":"557","ft":"標準"},{"f":"JP-Stand UG II UltraVent iCP-iCC 6-11 and 10-11 Baking (945mm - feet).pdf","c":"架台","n":"架台","sT":"UG II","fm":"6-11, 10-11","h":"945","ft":"標準"},{"f":"JP-Stand UG II iCP-iCC 6-11 and 10-11 (445mm - feet).pdf","c":"架台","n":"架台 Combi-Duo用","sT":"UG II","fm":"6-11, 10-11","h":"445","ft":"標準"},{"f":"JP-Stand UG II iCP-iCC 6-11 and 10-11 (699mm - feet).pdf","c":"架台","n":"架台","sT":"UG II","fm":"6-11, 10-11","h":"699","ft":"標準"},{"f":"JP-Stand UG II iCP-iCC 6-11 and 10-11 Baking (699mm - Caster).pdf","c":"架台","n":"架台","sT":"UG II","fm":"6-11, 10-11","h":"699","ft":"キャスター"},{"f":"JP-Stand UG II iCP-iCC 6-11 and 10-11 Baking (699mm - feet).pdf","c":"架台","n":"架台","sT":"UG II","fm":"6-21, 10-21","h":"699","ft":"標準"},{"f":"JP-Stand UG II iCP-iCC 6-21 and 10-21 (699mm - feet).pdf","c":"架台","n":"架台","sT":"UG II","fm":"6-21, 10-21","h":"699","ft":"標準"},{"f":"JP-Stand UG II iCP-iCC XS  (932mm - feet).pdf","c":"架台","n":"架台","sT":"UG II","fm":"XS 6-23","h":"932","ft":"標準"},{"f":"JP-Stand UG III iCP-iCC 6-11 and 10-11 (699mm - feet).pdf","c":"架台","n":"架台","sT":"UG III","fm":"6-11, 10-11","h":"699","ft":"標準"},{"f":"JP-Stand UG III iCP-iCC 6-21 and 10-21 (699mm - feet).pdf","c":"架台","n":"架台","sT":"UG III","fm":"6-21, 10-21","h":"699","ft":"標準"},{"f":"JP-Stand UG IV iCP-iCC 6-11 and 10-11 (699mm -  castors).pdf","c":"架台","n":"架台","sT":"UG IV","fm":"6-11, 10-11","h":"699","ft":"キャスター"},{"f":"JP-Stand UG IV iCP-iCC 6-11 and 10-11 (699mm - feet).pdf","c":"架台","n":"架台","sT":"UG IV","fm":"6-11, 10-11","h":"699","ft":"標準"},{"f":"JP-Stand UG IV iCP-iCC 6-21 and 10-21 (699mm - feet).pdf","c":"架台","n":"架台","sT":"UG IV","fm":"6-21, 10-21","h":"699","ft":"標準"},{"f":"JP-Stand UG XS (148mm - feet).pdf","c":"架台","n":"架台"},{"f":"JP-iCC 10-11 G_LeftHinge+UG2.pdf","c":"架台","n":"架台","sT":"UG II","fm":"10-11","h":"699","ft":"標準"},{"f":"JP-iCC 10-11 G_LeftHinge+UG4.pdf","c":"架台","n":"架台","sT":"UG IV","fm":"10-11","h":"699","ft":"標準"},{"f":"JP-iCC 6-11 G+UG1.pdf","c":"架台","n":"架台","sT":"UG I","fm":"6-11","h":"699","ft":"標準"},{"f":"JP-iCP 6-11 E+UG2.pdf","c":"架台","n":"架台","sT":"UG II","fm":"6-11","h":"699","ft":"標準"},{"f":"JP-iCP 6-11 E_master view -  on StructureFeet(150mm).pdf","c":"架台","n":"脚部付き基台","fm":"6-11","h":"152-172","ft":"基台脚"},{"f":"JP-iCP 6-11 G+UG2.pdf","c":"架台","n":"架台","sT":"UG II","fm":"6-11","h":"699","ft":"標準"},{"f":"JP-iCP XS 6-23 E_master view on Stand UGXS.pdf","c":"架台","n":"架台","sT":"UG XS","fm":"XS 6-23","h":"148","ft":"ステンレス脚"}];
 
 // ============================================================
-// パーサー: ファイル名から機種カテゴリ・型式・オプション・架台情報を抽出する
-// 対応カテゴリ: iCP / iCC 単体, iCP / iCC 単体+架台, Combi-Duo(2段重ね),
-//              CMP 単体, CMP を含む Combi-Duo, UltraVent/排気フード等の
-//              アクセサリー単体シート。SCC(セルフッキングセンター)を
-//              Combi-Duo の下段機として含むパターンにも対応。
+// カテゴリごとの絞り込み項目（順番は一覧表のExcelに合わせている）
 // ============================================================
-const SIZE_RE = /XS\s*\d{1,2}-\d{2}|\d{1,2}-\d{2}/g;
-const FUEL_RE = /(?<![A-Za-z])([EG])(?![A-Za-z])/g;
+const CATEGORIES = ["単品", "Combi-Duo", "iVario", "架台", "アクセサリー"];
 
-const STAND_PATTERNS = [
-  /stand\s+Duo\s+UG\s*[IV0-9]+(?:\s*\([^)]*\))?/i,
-  /stand\s+UG\s*[IV0-9]+(?:\s*\([^)]*\))?/i,
-  /UG\s*[IV0-9]+\s*\(\d+mm[^)]*\)/i,
-  /\+\s*UG\s*\d+(?:\s*\([^)]*\))?/i,
-  /Structure(?:Feet)?\s*\([^)]*\)/i,
-  /Sub ?structure ?Variant\s*\([^)]*\)/i,
-  /Lev\w*ing\s*[Kk]it(?:\s*\([^)]*\))?/i,
-  /standard\s+\d+mm\s+feet(?:\s*\+\s*UG\d*\s*\([^)]*\))?/i,
-  /with\s+\d+mm\s+feet/i,
-  /UG\s*[IV0-9]+/i,
-];
-
-function findStand(body) {
-  for (const re of STAND_PATTERNS) {
-    const m = body.match(re);
-    if (m) return m[0];
-  }
-  return null;
-}
-
-function parseFilename(file) {
-  const base = file.replace(/\.pdf$/i, "");
-  const body = base.startsWith("JP-") ? base.slice(3) : base;
-  const rec = { file, base, label: base };
-
-  // アクセサリー単体シート(部品番号ベース、または排気フード)
-  if (/^\d/.test(body) || body.startsWith("60.") || body.startsWith("ExhaustHood")) {
-    rec.category = "アクセサリー";
-    rec.sizes = [];
-    rec.fuels = [];
-    rec.stand = null;
-    rec.masterView = false;
-    rec.bakery = false;
-    rec.leftHinge = false;
-    rec.autoDose = false;
-    rec.ultraVent = /ultravent/i.test(body);
-    rec.ultraVentPlus = /ultravent[- ]?plus/i.test(body);
-    rec.unparsed = false;
-    return rec;
-  }
-
-  if (/^Combi-Duo/i.test(body)) rec.category = "Combi-Duo";
-  else if (/^CMP/i.test(body)) rec.category = "CMP";
-  else if (/^iCP/i.test(body)) rec.category = "iCP";
-  else if (/^iCC/i.test(body)) rec.category = "iCC";
-  else {
-    rec.category = "不明";
-    rec.sizes = [];
-    rec.fuels = [];
-    rec.stand = null;
-    rec.masterView = false;
-    rec.bakery = false;
-    rec.leftHinge = false;
-    rec.autoDose = false;
-    rec.ultraVent = false;
-    rec.ultraVentPlus = false;
-    rec.unparsed = true;
-    return rec;
-  }
-
-  const rawSizes = (body.match(SIZE_RE) || []).map(s => s.replace(/\s+/g, " ").trim());
-  const sizes = [...new Set(rawSizes)];
-  const fuels = [...new Set([...body.matchAll(FUEL_RE)].map(m => m[1].toUpperCase()))];
-
-  rec.sizes = sizes;
-  rec.fuels = fuels;
-  rec.stand = findStand(body);
-  rec.masterView = /master view/i.test(body);
-  rec.bakery = body.includes("ベーカリー仕様");
-  rec.leftHinge = /left ?hinge/i.test(body);
-  rec.autoDose = /auto ?dose|_AD_|(?<![A-Za-z])AD(?=[ _]|$)/i.test(body);
-  rec.ultraVentPlus = /ultravent[- ]?plus/i.test(body);
-  rec.ultraVent = /ultravent/i.test(body);
-
-  if (rec.category !== "Combi-Duo") {
-    rec.unparsed = sizes.length === 0;
-  } else {
-    const rest = body.replace(/^Combi-Duo\s*/i, "");
-    const hasAltBottom = /SCC|CMP\d/i.test(rest);
-    rec.unparsed = rawSizes.length < 2 && !hasAltBottom;
-  }
-  return rec;
-}
-
-const RECORDS = FILES.map(parseFilename);
-
-// ============================================================
-// UI
-// ============================================================
-const CATEGORY_ORDER = ["iCP", "iCC", "Combi-Duo", "CMP", "アクセサリー", "不明"];
-const OPTION_DEFS = [
-  { key: "ultraVent", label: "UltraVent" },
-  { key: "ultraVentPlus", label: "UltraVent Plus" },
-  { key: "autoDose", label: "AutoDose" },
-  { key: "leftHinge", label: "LeftHinge" },
-  { key: "bakery", label: "ベーカリー仕様" },
-  { key: "masterView", label: "master view" },
-];
-
-const state = {
-  query: "",
-  category: null,
-  options: new Set(),
-  size: "",
-  fuel: "",
-  selected: new Set(),
+const FILTER_DEFS = {
+  "単品": [
+    { key: "m", label: "モデル" },
+    { key: "s", label: "サイズ" },
+    { key: "e", label: "動力" },
+    { key: "d", label: "扉の向き" },
+    { key: "o", label: "オプション", multi: true },
+    { key: "v", label: "UltraVent" },
+    { key: "g", label: "架台" },
+  ],
+  "Combi-Duo": [
+    { key: "m", label: "モデル" },
+    { key: "s", label: "サイズ（上段＋下段）" },
+    { key: "e", label: "動力" },
+    { key: "d", label: "扉の向き" },
+    { key: "o", label: "オプション", multi: true },
+    { key: "v", label: "UltraVent" },
+    { key: "g", label: "架台" },
+  ],
+  "iVario": [
+    { key: "s", label: "サイズ" },
+    { key: "st", label: "架台" },
+  ],
+  "架台": [
+    { key: "sT", label: "架台タイプ" },
+    { key: "fm", label: "対応機種" },
+    { key: "ft", label: "脚" },
+  ],
+  "アクセサリー": [],
 };
 
-function buildFilters() {
-  const catWrap = document.getElementById("category-filters");
-  const presentCats = CATEGORY_ORDER.filter(c => RECORDS.some(r => r.category === c));
-  for (const cat of presentCats) {
-    const count = RECORDS.filter(r => r.category === cat).length;
-    const chip = document.createElement("button");
-    chip.className = "chip";
-    chip.textContent = `${cat} (${count})`;
-    chip.dataset.value = cat;
-    chip.addEventListener("click", () => {
-      state.category = state.category === cat ? null : cat;
-      render();
-    });
-    catWrap.appendChild(chip);
-  }
+// サイズ・架台などをきれいな順番で並べるための優先度
+const SIZE_ORDER = ["XS 6-23", "6-11", "6-21", "10-11", "10-21", "20-11", "20-21"];
+const STAND_ORDER = ["なし（本体のみ）", "UG I", "UG II", "UG III", "UG IV", "UG XS"];
+const MAX_ROWS = 20;
 
-  const optWrap = document.getElementById("option-filters");
-  for (const opt of OPTION_DEFS) {
-    const count = RECORDS.filter(r => r[opt.key]).length;
-    if (count === 0) continue;
-    const chip = document.createElement("button");
-    chip.className = "chip";
-    chip.textContent = `${opt.label} (${count})`;
-    chip.dataset.value = opt.key;
-    chip.addEventListener("click", () => {
-      if (state.options.has(opt.key)) state.options.delete(opt.key);
-      else state.options.add(opt.key);
-      render();
-    });
-    optWrap.appendChild(chip);
-  }
+const state = { cat: "単品", query: "", filters: {}, selected: new Set() };
 
-  const sizeSelect = document.getElementById("size-select");
-  const allSizes = [...new Set(RECORDS.flatMap(r => r.sizes))].sort();
-  for (const s of allSizes) {
-    const opt = document.createElement("option");
-    opt.value = s;
-    opt.textContent = s;
-    sizeSelect.appendChild(opt);
-  }
-  sizeSelect.addEventListener("change", () => { state.size = sizeSelect.value; render(); });
+// ------------------------------------------------------------ ヘルパー
+const inCat = () => DRAWINGS.filter(r => r.c === state.cat);
 
-  document.getElementById("fuel-select").addEventListener("change", (e) => {
-    state.fuel = e.target.value; render();
-  });
+function valuesOf(rec, key) {
+  const v = rec[key];
+  if (v === undefined || v === null || v === "") return [];
+  return Array.isArray(v) ? v : [v];
+}
 
-  document.getElementById("search").addEventListener("input", (e) => {
-    state.query = e.target.value.trim().toLowerCase();
-    render();
+function sortValues(key, vals) {
+  const order = key === "s" ? SIZE_ORDER : (key === "g" ? STAND_ORDER : null);
+  return vals.sort((a, b) => {
+    if (order) {
+      const ia = order.indexOf(a), ib = order.indexOf(b);
+      if (ia !== -1 || ib !== -1) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    }
+    return a.localeCompare(b, "ja");
   });
 }
 
-function updateChipStyles() {
-  document.querySelectorAll("#category-filters .chip").forEach(chip => {
-    chip.classList.toggle("active", chip.dataset.value === state.category);
-  });
-  document.querySelectorAll("#option-filters .chip").forEach(chip => {
-    chip.classList.toggle("active", state.options.has(chip.dataset.value));
-  });
+/** 動力は上下段で違う場合があるので ef（配列）も見る */
+function recMatchesValue(rec, key, val) {
+  if (key === "e" && rec.ef) return rec.ef.includes(val);
+  return valuesOf(rec, key).includes(val);
 }
 
-function matches(rec) {
-  if (state.category && rec.category !== state.category) return false;
-  for (const key of state.options) if (!rec[key]) return false;
-  if (state.size && !rec.sizes.includes(state.size)) return false;
-  if (state.fuel && !rec.fuels.includes(state.fuel)) return false;
-  if (state.query && !rec.base.toLowerCase().includes(state.query)) return false;
+function matches(rec, ignoreKey) {
+  for (const [key, sel] of Object.entries(state.filters)) {
+    if (key === ignoreKey) continue;
+    const chosen = [...sel];
+    if (chosen.length === 0) continue;
+    const def = (FILTER_DEFS[state.cat] || []).find(d => d.key === key);
+    if (def && def.multi) {
+      // オプションは選んだものを「すべて」含むレコードだけ残す
+      if (!chosen.every(v => recMatchesValue(rec, key, v))) return false;
+    } else if (!chosen.some(v => recMatchesValue(rec, key, v))) {
+      return false;
+    }
+  }
+  if (state.query) {
+    const hay = (rec.f + " " + (rec.n || "")).toLowerCase();
+    if (!state.query.split(/\s+/).every(t => hay.includes(t))) return false;
+  }
   return true;
 }
 
-function renderUnparsed() {
-  const wrap = document.getElementById("unparsed-wrap");
-  wrap.innerHTML = "";
-  const bad = RECORDS.filter(r => r.unparsed);
-  if (bad.length === 0) return;
-  const details = document.createElement("details");
-  details.className = "warn-banner";
-  const summary = document.createElement("summary");
-  summary.textContent = `判定できなかったファイル名: ${bad.length} 件（クリックで一覧表示）`;
-  details.appendChild(summary);
-  const ul = document.createElement("ul");
-  for (const r of bad) {
-    const li = document.createElement("li");
-    li.textContent = r.file;
-    ul.appendChild(li);
-  }
-  details.appendChild(ul);
-  wrap.appendChild(details);
+const filtered = () => inCat().filter(r => matches(r));
+const hasActiveFilter = () => Object.values(state.filters).some(s => s.size > 0);
+
+// ------------------------------------------------------------ 描画
+function renderCats() {
+  const wrap = document.getElementById("cats");
+  wrap.innerHTML = CATEGORIES
+    .filter(c => DRAWINGS.some(r => r.c === c))
+    .map(c => {
+      const n = DRAWINGS.filter(r => r.c === c).length;
+      return `<button type="button" class="cat-btn${c === state.cat ? " active" : ""}" data-cat="${c}">${c} (${n})</button>`;
+    }).join("");
 }
 
-function badgeFor(rec) {
-  const badges = [];
-  badges.push(`<span class="badge category">${rec.category}</span>`);
-  for (const s of rec.sizes) badges.push(`<span class="badge">${s}</span>`);
-  for (const f of rec.fuels) badges.push(`<span class="badge">${f}</span>`);
-  if (rec.ultraVentPlus) badges.push(`<span class="badge">UltraVent Plus</span>`);
-  else if (rec.ultraVent) badges.push(`<span class="badge">UltraVent</span>`);
-  if (rec.autoDose) badges.push(`<span class="badge">AutoDose</span>`);
-  if (rec.leftHinge) badges.push(`<span class="badge">LeftHinge</span>`);
-  if (rec.bakery) badges.push(`<span class="badge">ベーカリー仕様</span>`);
-  if (rec.masterView) badges.push(`<span class="badge">master view</span>`);
-  if (rec.unparsed) badges.push(`<span class="badge unparsed">要確認</span>`);
-  return badges.join("");
+function renderFilters() {
+  const defs = FILTER_DEFS[state.cat] || [];
+  const wrap = document.getElementById("filters");
+  const base = inCat();
+
+  const html = defs.map(def => {
+    // その項目以外の条件を適用した結果から選択肢を作る（0件になる選択肢は出さない）
+    const pool = base.filter(r => matches(r, def.key));
+    const counts = new Map();
+    for (const r of pool) for (const v of valuesOf(r, def.key)) counts.set(v, (counts.get(v) || 0) + 1);
+
+    const sel = state.filters[def.key] || new Set();
+    for (const v of sel) if (!counts.has(v)) counts.set(v, 0);
+    if (counts.size === 0) return "";
+
+    const chips = sortValues(def.key, [...counts.keys()]).map(v => {
+      const active = sel.has(v);
+      return `<button type="button" class="chip${active ? " active" : ""}" data-key="${def.key}" data-val="${escapeAttr(v)}">${escapeHtml(v)} (${counts.get(v)})</button>`;
+    }).join("");
+
+    return `<div class="chipgroup">
+      <div class="chipgroup-label">${def.label}</div>
+      <div class="chiprow">${chips}</div>
+    </div>`;
+  }).join("");
+
+  wrap.innerHTML = html || `<p class="hint" style="margin:0;">このカテゴリは絞り込み項目がありません。下の一覧からお選びください。</p>`;
+  document.getElementById("clear-filters").disabled = !hasActiveFilter() && !state.query;
+}
+
+function metaLine(rec) {
+  const parts = [];
+  if (rec.c === "Combi-Duo" && rec.u && rec.l) parts.push(`上: ${rec.u} ／ 下: ${rec.l}`);
+  else {
+    if (rec.m) parts.push(rec.m);
+    if (rec.s) parts.push(rec.s);
+    if (rec.e) parts.push(rec.e);
+  }
+  if (rec.d === "逆扉") parts.push("逆扉");
+  if (rec.v) parts.push(rec.v);
+  if (rec.o && rec.o.length) parts.push(rec.o.join("・"));
+  if (rec.st) parts.push(`架台: ${rec.st}`);
+  else if (rec.sT) parts.push(`${rec.sT}${rec.h ? ` (${rec.h}mm)` : ""}`);
+  if (rec.fm) parts.push(`対応: ${rec.fm}`);
+  if (rec.ft) parts.push(rec.ft);
+  return parts.join(" ／ ");
+}
+
+function renderResults() {
+  const list = filtered();
+  const box = document.getElementById("results");
+  const countEl = document.getElementById("result-count");
+  countEl.textContent = list.length ? `${list.length} 件` : "";
+
+  if (!hasActiveFilter() && !state.query && list.length > MAX_ROWS) {
+    box.innerHTML = `<div class="notice">上の条件を選ぶと、該当する承認図がここに表示されます<br>（このカテゴリには ${list.length} 件あります）</div>`;
+    return;
+  }
+  if (list.length === 0) {
+    box.innerHTML = `<div class="notice">条件に合う承認図が見つかりませんでした。<br>条件を減らしてお試しください。</div>`;
+    return;
+  }
+
+  const shown = list.slice(0, MAX_ROWS);
+  box.innerHTML = shown.map(rec => {
+    const checked = state.selected.has(rec.f);
+    const title = rec.n || rec.f.replace(/\.pdf$/i, "");
+    return `<div class="row${checked ? " checked" : ""}">
+      <input type="checkbox" data-file="${escapeAttr(rec.f)}" ${checked ? "checked" : ""} aria-label="${escapeAttr(title)} を選択">
+      <div class="row-body">
+        <a class="row-name" href="pdf/${encodeURIComponent(rec.f)}" target="_blank" rel="noopener">${escapeHtml(title)}</a>
+        <div class="row-meta">${escapeHtml(metaLine(rec))}</div>
+      </div>
+      <div class="row-actions">
+        <button type="button" class="icon-btn" data-dl="${escapeAttr(rec.f)}" title="ダウンロード">⬇</button>
+      </div>
+    </div>`;
+  }).join("") + (list.length > MAX_ROWS
+    ? `<div class="more-note">上位 ${MAX_ROWS} 件を表示しています（全 ${list.length} 件）。条件を追加して絞り込んでください。</div>`
+    : "");
+}
+
+function renderShareBar() {
+  const n = state.selected.size;
+  document.getElementById("sel-count").textContent = n;
+  document.getElementById("sharebar").style.display = n > 0 ? "block" : "none";
 }
 
 function render() {
-  updateChipStyles();
-  const grid = document.getElementById("grid");
-  const filtered = RECORDS.filter(matches);
-  grid.innerHTML = "";
-  for (const rec of filtered) {
-    const card = document.createElement("div");
-    card.className = "card";
-
-    const selectWrap = document.createElement("div");
-    selectWrap.className = "card-select";
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.setAttribute("aria-label", `${rec.base} を選択`);
-    checkbox.checked = state.selected.has(rec.file);
-    checkbox.addEventListener("change", () => {
-      toggleSelect(rec.file, checkbox.checked);
-    });
-    selectWrap.appendChild(checkbox);
-
-    const a = document.createElement("a");
-    a.className = "card-body";
-    a.href = "pdf/" + encodeURIComponent(rec.file);
-    a.target = "_blank";
-    a.rel = "noopener";
-    a.innerHTML = `
-      <div class="card-title">${rec.base}</div>
-      <div class="badges">${badgeFor(rec)}</div>
-      ${rec.stand ? `<div class="card-meta">架台: ${rec.stand}</div>` : ""}
-    `;
-
-    card.appendChild(selectWrap);
-    card.appendChild(a);
-    grid.appendChild(card);
-  }
-  document.getElementById("visible-count").textContent = filtered.length;
-  document.getElementById("empty-msg").style.display = filtered.length === 0 ? "block" : "none";
+  renderCats();
+  renderFilters();
+  renderResults();
+  renderShareBar();
 }
 
-// ============================================================
-// 共有機能: チェックボックスで選んだ承認図をメール/LINE/SMS/OSの共有シートで送信
-// ============================================================
-function getSelectedRecords() {
-  return RECORDS.filter(r => state.selected.has(r.file));
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
+const escapeAttr = escapeHtml;
 
-function toggleSelect(file, checked) {
-  if (checked) state.selected.add(file);
-  else state.selected.delete(file);
-  updateShareBar();
-}
-
-function clearSelection() {
-  state.selected.clear();
-  updateShareBar();
+// ------------------------------------------------------------ 操作
+document.getElementById("cats").addEventListener("click", e => {
+  const btn = e.target.closest(".cat-btn");
+  if (!btn) return;
+  state.cat = btn.dataset.cat;
+  state.filters = {};
   render();
+});
+
+document.getElementById("filters").addEventListener("click", e => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  const { key, val } = chip.dataset;
+  const def = (FILTER_DEFS[state.cat] || []).find(d => d.key === key);
+  const sel = state.filters[key] || (state.filters[key] = new Set());
+  if (sel.has(val)) sel.delete(val);
+  else if (def && def.multi) sel.add(val);
+  else { sel.clear(); sel.add(val); }   // 単一選択の項目は選び直しで置き換え
+  render();
+});
+
+document.getElementById("clear-filters").addEventListener("click", () => {
+  state.filters = {};
+  state.query = "";
+  document.getElementById("search").value = "";
+  render();
+});
+
+document.getElementById("search").addEventListener("input", e => {
+  state.query = e.target.value.trim().toLowerCase();
+  render();
+});
+
+document.getElementById("results").addEventListener("change", e => {
+  const cb = e.target.closest('input[type="checkbox"]');
+  if (!cb) return;
+  if (cb.checked) state.selected.add(cb.dataset.file);
+  else state.selected.delete(cb.dataset.file);
+  cb.closest(".row").classList.toggle("checked", cb.checked);
+  renderShareBar();
+});
+
+document.getElementById("results").addEventListener("click", e => {
+  const btn = e.target.closest("[data-dl]");
+  if (!btn) return;
+  downloadFiles([btn.dataset.dl]);
+});
+
+// ------------------------------------------------------------ 共有・ダウンロード
+const selectedFiles = () => [...state.selected];
+const absUrl = f => new URL("pdf/" + encodeURIComponent(f), location.href).href;
+const titleOf = f => f.replace(/\.pdf$/i, "");
+
+function shareText(files) {
+  const body = files.map(f => `${titleOf(f)}\n${absUrl(f)}`).join("\n\n");
+  return `承認図をお送りします。\n\n${body}`;
 }
 
-function updateShareBar() {
-  const bar = document.getElementById("share-bar");
-  const count = state.selected.size;
-  document.getElementById("share-count").textContent = count;
-  bar.style.display = count > 0 ? "flex" : "none";
+function downloadFiles(files) {
+  files.forEach((f, i) => {
+    setTimeout(() => {
+      const a = document.createElement("a");
+      a.href = "pdf/" + encodeURIComponent(f);
+      a.download = f;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }, i * 300);   // 連続ダウンロードがブラウザにブロックされないよう間隔をあける
+  });
 }
 
-function absoluteUrl(file) {
-  return new URL("pdf/" + encodeURIComponent(file), window.location.href).href;
-}
-
-function buildShareText(records) {
-  const lines = records.map(r => `${r.base}\n${absoluteUrl(r.file)}`);
-  return `承認図を送付します。\n\n${lines.join("\n\n")}`;
-}
-
-function shareViaMail() {
-  const records = getSelectedRecords();
-  if (records.length === 0) return;
-  const subject = encodeURIComponent(`承認図: ${records.map(r => r.base).join(", ")}`.slice(0, 200));
-  const body = encodeURIComponent(buildShareText(records));
-  window.location.href = `mailto:?subject=${subject}&body=${body}`;
-}
-
-function shareViaLine() {
-  const records = getSelectedRecords();
-  if (records.length === 0) return;
-  const text = encodeURIComponent(buildShareText(records));
-  window.open(`https://line.me/R/msg/text/?${text}`, "_blank", "noopener");
-}
-
-function shareViaSms() {
-  const records = getSelectedRecords();
-  if (records.length === 0) return;
-  const text = encodeURIComponent(buildShareText(records));
-  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
-  window.location.href = isIOS ? `sms:&body=${text}` : `sms:?body=${text}`;
-}
-
-async function getShareFiles(records) {
-  const files = [];
-  for (const rec of records) {
-    const res = await fetch("pdf/" + encodeURIComponent(rec.file));
-    if (!res.ok) throw new Error("fetch failed: " + rec.file);
-    const blob = await res.blob();
-    files.push(new File([blob], rec.file, { type: "application/pdf" }));
-  }
-  return files;
-}
-
-async function shareViaWebShare() {
-  const records = getSelectedRecords();
-  if (records.length === 0) return;
-  const btn = document.getElementById("btn-web-share");
-  const originalText = btn.textContent;
+async function webShare() {
+  const files = selectedFiles();
+  if (!files.length) return;
+  const btn = document.getElementById("btn-share");
+  const label = btn.textContent;
   btn.disabled = true;
   btn.textContent = "準備中...";
   try {
-    let shareData = null;
+    let data = null;
     if (navigator.canShare) {
       try {
-        const files = await getShareFiles(records);
-        if (navigator.canShare({ files })) {
-          shareData = { files, title: "承認図", text: buildShareText(records) };
+        const blobs = [];
+        for (const f of files) {
+          const res = await fetch("pdf/" + encodeURIComponent(f));
+          if (!res.ok) throw new Error(f);
+          blobs.push(new File([await res.blob()], f, { type: "application/pdf" }));
         }
-      } catch (err) {
-        // PDF取得に失敗した場合はリンク共有にフォールバック
+        if (navigator.canShare({ files: blobs })) {
+          data = { files: blobs, title: "承認図", text: shareText(files) };
+        }
+      } catch (_) {
+        // PDF本体を渡せない環境ではリンク共有に切り替える
       }
     }
-    if (!shareData) {
-      shareData = { title: "承認図", text: buildShareText(records) };
-    }
-    await navigator.share(shareData);
+    await navigator.share(data || { title: "承認図", text: shareText(files) });
   } catch (err) {
-    if (err.name !== "AbortError") {
-      alert("共有に失敗しました。メール / LINE / SMS ボタンをお試しください。");
+    if (err && err.name !== "AbortError") {
+      alert("共有できませんでした。メール / LINE / SMS のボタンをお試しください。");
     }
   } finally {
     btn.disabled = false;
-    btn.textContent = originalText;
+    btn.textContent = label;
   }
 }
 
-function initShareBar() {
-  if (!navigator.share) {
-    document.getElementById("btn-web-share").style.display = "none";
-  }
-  document.getElementById("btn-web-share").addEventListener("click", shareViaWebShare);
-  document.getElementById("btn-mail-share").addEventListener("click", shareViaMail);
-  document.getElementById("btn-line-share").addEventListener("click", shareViaLine);
-  document.getElementById("btn-sms-share").addEventListener("click", shareViaSms);
-  document.getElementById("btn-clear-share").addEventListener("click", clearSelection);
-}
+document.getElementById("btn-share").addEventListener("click", webShare);
 
-document.getElementById("total-count").textContent = FILES.length;
-buildFilters();
-renderUnparsed();
-initShareBar();
+document.getElementById("btn-mail").addEventListener("click", () => {
+  const files = selectedFiles();
+  if (!files.length) return;
+  const subject = encodeURIComponent(`承認図のご送付（${files.length}件）`);
+  location.href = `mailto:?subject=${subject}&body=${encodeURIComponent(shareText(files))}`;
+});
+
+document.getElementById("btn-line").addEventListener("click", () => {
+  const files = selectedFiles();
+  if (!files.length) return;
+  window.open(`https://line.me/R/msg/text/?${encodeURIComponent(shareText(files))}`, "_blank", "noopener");
+});
+
+document.getElementById("btn-sms").addEventListener("click", () => {
+  const files = selectedFiles();
+  if (!files.length) return;
+  const text = encodeURIComponent(shareText(files));
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+  location.href = isIOS ? `sms:&body=${text}` : `sms:?body=${text}`;
+});
+
+document.getElementById("btn-download").addEventListener("click", () => downloadFiles(selectedFiles()));
+
+document.getElementById("btn-clear-sel").addEventListener("click", () => {
+  state.selected.clear();
+  render();
+});
+
+// ------------------------------------------------------------ 起動
+if (!navigator.share) document.getElementById("btn-share").style.display = "none";
+document.getElementById("total-count").textContent = DRAWINGS.length;
 render();
 </script>
 </body>
